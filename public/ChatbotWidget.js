@@ -236,14 +236,22 @@ function initChatbot(config, backendUrl, clientId) {
       });
   }
 
-  // 🪄 RESPONSIVE MOBILE — limite max hauteur et largeur
+  // 💡 Styles responsive mobile
   const style = document.createElement('style');
   style.textContent = `
     @media (max-width: 480px) {
       .custom-chatbot-widget {
-        width: 90vw !important;
-        max-height: 85vh !important;
+        width: 92vw !important;
+        max-height: 80vh !important;
+        overflow-y: auto !important;
+        padding: 16px !important;
         border-radius: 16px !important;
+      }
+      .custom-chatbot-widget input {
+        font-size: 14px !important;
+      }
+      .custom-chatbot-widget h2 {
+        font-size: 18px !important;
       }
     }
   `;
