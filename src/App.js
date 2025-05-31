@@ -1,7 +1,25 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "./App.css";
 
 function App() {
+  useEffect(() => {
+    // Définis ici l'ID du client et l'URL du backend
+    const CLIENT_ID = "novacorp"; // ← L'ID pour charger config/novacorp.json
+    const BACKEND_URL = "https://chatbot-vocal-backend.onrender.com";
+    const FRONTEND_WIDGET_URL = "https://chatbot-vocal-frontend.onrender.com/ChatbotWidget.js";
+    
+    // Injecte dynamiquement le widget chatbot vocal
+    const script = document.createElement('script');
+    script.src = FRONTEND_WIDGET_URL;
+    script.setAttribute('data-client-id', CLIENT_ID); // ← Utilisé par le widget JS pour charger la config du bon client !
+    script.setAttribute('data-backend-url', BACKEND_URL); // ← URL du backend
+    script.defer = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
   return (
     <div className="site-factice">
       <header>

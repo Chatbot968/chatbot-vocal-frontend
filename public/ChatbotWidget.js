@@ -3,11 +3,11 @@ const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecogni
 if (!SpeechRecognition) {
   alert("❌ Chatbot vocal non supporté sur ce navigateur");
 } else {
-  // Charge le widget
-  initChatbot();
+  // Charge le widget (après config)
+  loadAndInitChatbot();
 }
 
-function initChatbot() {
+async function loadAndInitChatbot() {
   // 🔥 Récupère dynamiquement le clientId ET le backendUrl depuis le tag d’injection HTML
   let clientId = null;
   let backendUrl = null;
@@ -21,10 +21,35 @@ function initChatbot() {
   if (widgetScript && widgetScript.getAttribute('data-backend-url')) {
     backendUrl = widgetScript.getAttribute('data-backend-url');
   } else {
-    // Par défaut : ton backend hébergé sur Render
     backendUrl = "https://chatbot-vocal-backend.onrender.com";
   }
 
+  // 🔥 CHARGE LA CONFIG CLIENT DYNAMIQUE
+  let clientConfig = {
+    color: "#0078d4",
+    suggestions: [
+      "Je souhaite prendre rendez-vous",
+      "Quels sont vos services ?",
+      "J’aimerais en savoir plus sur vos tarifs"
+    ],
+    rgpdLink: "/politique-confidentialite.html"
+  };
+  try {
+    const configUrl = `${backendUrl}/config/${clientId}.json`;
+    const res = await fetch(configUrl);
+    if (res.ok) {
+      clientConfig = await res.json();
+    } else {
+      console.warn("[Chatbot] Fichier config non trouvé, fallback par défaut.");
+    }
+  } catch (e) {
+    console.warn("[Chatbot] Impossible de charger la config, fallback.");
+  }
+
+  initChatbot(clientConfig, backendUrl, clientId);
+}
+
+function initChatbot(config, backendUrl, clientId) {
   // Génération d’un userId unique par visiteur
   let userId = localStorage.getItem('chatbotUserId');
   if (!userId) {
@@ -59,7 +84,7 @@ function initChatbot() {
 
   // 0) Bouton de lancement (SVG stylé)
   const launchBtn = document.createElement('button');
-  launchBtn.innerHTML = `<svg height="38" width="38" viewBox="0 0 38 38" fill="none"><circle cx="19" cy="19" r="19" fill="#0078d4"/><path d="M26 19l-8 5V14l8 5z" fill="#fff"/></svg>`;
+  launchBtn.innerHTML = `<svg height="38" width="38" viewBox="0 0 38 38" fill="none"><circle cx="19" cy="19" r="19" fill="${config.color}"/><path d="M26 19l-8 5V14l8 5z" fill="#fff"/></svg>`;
   Object.assign(launchBtn.style, {
     border: 'none',
     background: 'transparent',
@@ -128,7 +153,7 @@ function initChatbot() {
   Object.assign(arrowBtn.style, {
     padding: '8px',
     borderRadius: '50%',
-    background: '#0078d4',
+    background: config.color,
     color: '#fff',
     fontSize: '20px',
     cursor: 'pointer',
@@ -147,7 +172,8 @@ function initChatbot() {
   quickContainer.style.flexDirection = 'column';
   quickContainer.style.alignItems = 'stretch';
 
-  const quickReplies = [
+  // ⬇️ Utilisation des suggestions dynamiques issues de la config
+  const quickReplies = Array.isArray(config.suggestions) && config.suggestions.length > 0 ? config.suggestions : [
     "Je souhaite prendre rendez-vous",
     "Quels sont vos services ?",
     "J’aimerais en savoir plus sur vos tarifs"
@@ -156,7 +182,7 @@ function initChatbot() {
     const btn = document.createElement('button');
     btn.textContent = q;
     btn.className = "quick-btn";
-    btn.style.margin = '0 0 10px 0'; // Espacement vertical
+    btn.style.margin = '0 0 10px 0';
     btn.onclick = () => {
       if (!isTextMode) {
         const placeholder = appendLoadingBubble();
@@ -186,7 +212,7 @@ function initChatbot() {
     background: '#fff',
     borderRadius: '30px',
     padding: '6px',
-    border: '1px solid #0078d4'
+    border: `1px solid ${config.color}`
   });
   const textInput = document.createElement('input');
   textInput.type = 'text';
@@ -195,7 +221,7 @@ function initChatbot() {
     padding: '6px 10px',
     width: '180px',
     borderRadius: '20px',
-    border: '1px solid #0078d4',
+    border: `1px solid ${config.color}`,
     outline: 'none'
   });
   const sendBtn = document.createElement('button');
@@ -204,7 +230,7 @@ function initChatbot() {
     marginLeft: '6px',
     padding: '6px',
     borderRadius: '50%',
-    background: '#0078d4',
+    background: config.color,
     color: '#fff',
     fontSize: '16px',
     border: 'none',
@@ -249,9 +275,9 @@ function initChatbot() {
   });
   mainWidget.appendChild(vocalBtn);
 
-  // 7) Lien RGPD
+  // 7) Lien RGPD dynamique
   const rgpd = document.createElement('div');
-  rgpd.innerHTML = '<a href="/politique-confidentialite.html" target="_blank" style="font-size:11px;color:#888;display:block;margin-top:5px;text-align:right">Politique de confidentialité</a>';
+  rgpd.innerHTML = `<a href="${config.rgpdLink || '/politique-confidentialite.html'}" target="_blank" style="font-size:11px;color:#888;display:block;margin-top:5px;text-align:right">Politique de confidentialité</a>`;
   mainWidget.appendChild(rgpd);
 
   // === Utilitaires ===
@@ -409,7 +435,7 @@ function initChatbot() {
     }
     /* Suggestions verticales et larges */
     .quick-btn {
-      background:#eaf4ff; color:#0078d4; border:1px solid #0078d4;
+      background:#eaf4ff; color:${config.color}; border:1px solid ${config.color};
       border-radius:22px; margin:0 0 10px 0; padding:10px 16px;
       font-size:15px; font-weight:500; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.03);
       transition:background 0.15s;
