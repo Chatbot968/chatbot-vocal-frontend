@@ -1,17 +1,13 @@
-// === Chatbot vocal avec visuel "app mobile" stylé, toggle vocal/texte, logo client, responsive, RGPD ===
-// === Version longue fidèle au code original de Diego ===
+// === Chatbot vocal avec layout "app mobile" moderne, switch vocal/texte, logo client, suggestions dynamiques ===
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (!SpeechRecognition) {
-  alert("❌ Chatbot vocal non supporté sur ce navigateur");
-} else {
-  loadAndInitChatbot();
-}
+if (!SpeechRecognition) alert("❌ Chatbot vocal non supporté sur ce navigateur");
+else loadAndInitChatbot();
 
 async function loadAndInitChatbot() {
-  const script = document.currentScript || document.querySelector('script[data-client-id]');
-  const clientId = script?.getAttribute('data-client-id') || "novacorp";
-  const backendUrl = script?.getAttribute('data-backend-url') || "https://chatbot-vocal-backend.onrender.com";
+  const scriptTag = document.currentScript || document.querySelector('script[data-client-id]');
+  const clientId = scriptTag?.getAttribute('data-client-id') || "novacorp";
+  const backendUrl = scriptTag?.getAttribute('data-backend-url') || "https://chatbot-vocal-backend.onrender.com";
 
   let config = {
     color: "#0078d4",
@@ -28,55 +24,61 @@ async function loadAndInitChatbot() {
     const res = await fetch(`${backendUrl}/config/${clientId}.json`);
     if (res.ok) config = await res.json();
   } catch (e) {
-    console.warn("[Chatbot] Erreur de chargement de config, fallback utilisé.");
+    console.warn("[Chatbot] Config non chargée, fallback utilisé.");
   }
 
   initChatbot(config, backendUrl, clientId);
 }
 
 function initChatbot(config, backendUrl, clientId) {
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'fr-FR';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
   const userId = localStorage.getItem('chatbotUserId') || (() => {
     const id = 'user_' + Math.random().toString(36).substr(2, 9);
     localStorage.setItem('chatbotUserId', id);
     return id;
   })();
 
-  const recognition = new SpeechRecognition();
-  recognition.lang = 'fr-FR';
-  recognition.continuous = false;
-  recognition.interimResults = false;
-
-  let isTextMode = false;
-
-  // Création du conteneur principal
   const container = document.createElement('div');
-  Object.assign(container.style, {
-    position: 'fixed', bottom: '20px', right: '20px', zIndex: '9999',
-    display: 'flex', flexDirection: 'column', alignItems: 'flex-end',
-    maxWidth: '96vw'
-  });
+  container.style.position = 'fixed';
+  container.style.bottom = '20px';
+  container.style.right = '20px';
+  container.style.zIndex = '9999';
   document.body.appendChild(container);
 
-  // Bouton d'ouverture
-  const openBtn = document.createElement('button');
-  openBtn.innerHTML = `<svg height="40" width="40" viewBox="0 0 38 38" fill="none">
-    <circle cx="19" cy="19" r="19" fill="${config.color}"/>
-    <path d="M26 19l-8 5V14l8 5z" fill="#fff"/></svg>`;
-  Object.assign(openBtn.style, {
-    background: 'transparent', border: 'none', cursor: 'pointer', display: 'block'
-  });
-  container.appendChild(openBtn);
+  const launcher = document.createElement('button');
+  launcher.textContent = '🤖';
+  launcher.style.fontSize = '28px';
+  launcher.style.border = 'none';
+  launcher.style.background = config.color;
+  launcher.style.color = '#fff';
+  launcher.style.borderRadius = '50%';
+  launcher.style.padding = '10px';
+  launcher.style.cursor = 'pointer';
+  container.appendChild(launcher);
 
   const widget = document.createElement('div');
-  Object.assign(widget.style, {
-    display: 'none', flexDirection: 'column', background: '#fff',
-    border: `1px solid ${config.color}`, borderRadius: '20px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '12px 14px',
-    width: '320px', maxWidth: '96vw', fontFamily: 'sans-serif'
-  });
+  widget.style.display = 'none';
+  widget.style.flexDirection = 'column';
+  widget.style.width = '350px';
+  widget.style.maxWidth = '90vw';
+  widget.style.background = 'linear-gradient(to bottom, #2d6cdf, #d7dcfa)';
+  widget.style.color = '#000';
+  widget.style.borderRadius = '20px';
+  widget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)';
+  widget.style.padding = '20px';
+  widget.style.fontFamily = 'sans-serif';
   container.appendChild(widget);
 
-  // Header : logo + bouton fermer
+  launcher.onclick = () => {
+    launcher.style.display = 'none';
+    widget.style.display = 'flex';
+  };
+
+  // Header avec logo + bouton fermeture
   const header = document.createElement('div');
   header.style.display = 'flex';
   header.style.justifyContent = 'space-between';
@@ -84,131 +86,146 @@ function initChatbot(config, backendUrl, clientId) {
 
   const logo = document.createElement('img');
   logo.src = config.logoUrl || '';
-  logo.style.height = '32px';
-  logo.style.objectFit = 'contain';
-  logo.style.flex = '1';
+  logo.alt = 'Logo';
+  logo.style.height = '30px';
   header.appendChild(logo);
 
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '✕';
-  Object.assign(closeBtn.style, {
-    background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer'
-  });
+  closeBtn.style.border = 'none';
+  closeBtn.style.background = 'none';
+  closeBtn.style.fontSize = '20px';
+  closeBtn.style.cursor = 'pointer';
+  closeBtn.onclick = () => {
+    widget.style.display = 'none';
+    launcher.style.display = 'inline-block';
+  };
   header.appendChild(closeBtn);
   widget.appendChild(header);
 
-  // Contenu suggestions
-  const quickReplies = config.suggestions || [];
-  const quickDiv = document.createElement('div');
-  quickReplies.forEach(txt => {
-    const b = document.createElement('button');
-    b.textContent = txt;
-    Object.assign(b.style, {
-      display: 'block', padding: '8px 12px', margin: '6px 0',
-      background: '#f4f4f4', border: '1px solid #ccc', borderRadius: '12px',
-      cursor: 'pointer', fontSize: '14px', textAlign: 'left'
-    });
-    b.onclick = () => handleMessage(txt);
-    quickDiv.appendChild(b);
-  });
-  widget.appendChild(quickDiv);
+  const title = document.createElement('h2');
+  title.innerHTML = "Hi there 👋<br><strong>How can we help?</strong>";
+  title.style.margin = '16px 0';
+  title.style.color = '#fff';
+  widget.appendChild(title);
 
-  // Chat container
-  const chat = document.createElement('div');
-  Object.assign(chat.style, {
-    overflowY: 'auto', maxHeight: '200px', marginTop: '10px'
-  });
-  widget.appendChild(chat);
+  // Suggestions
+  const suggBox = document.createElement('div');
+  suggBox.style.background = '#fff';
+  suggBox.style.borderRadius = '12px';
+  suggBox.style.padding = '12px';
+  suggBox.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)';
 
-  // Zone saisie
-  const footer = document.createElement('div');
-  footer.style.display = 'flex';
-  footer.style.alignItems = 'center';
-  footer.style.gap = '6px';
+  config.suggestions.forEach(s => {
+    const item = document.createElement('div');
+    item.textContent = s;
+    item.style.padding = '8px 0';
+    item.style.borderBottom = '1px solid #eee';
+    item.style.cursor = 'pointer';
+    item.onclick = () => sendMessage(s);
+    suggBox.appendChild(item);
+  });
+  widget.appendChild(suggBox);
+
+  const inputBox = document.createElement('div');
+  inputBox.style.display = 'flex';
+  inputBox.style.marginTop = '14px';
+  inputBox.style.background = '#fff';
+  inputBox.style.borderRadius = '16px';
+  inputBox.style.alignItems = 'center';
+  inputBox.style.overflow = 'hidden';
 
   const input = document.createElement('input');
   input.placeholder = 'Parlez ou tapez ici...';
-  Object.assign(input.style, {
-    flex: 1, padding: '10px', borderRadius: '18px',
-    border: `1px solid ${config.color}`
-  });
+  input.style.flex = '1';
+  input.style.padding = '10px';
+  input.style.border = 'none';
+  input.style.outline = 'none';
+
   const micBtn = document.createElement('button');
   micBtn.textContent = '🎤';
+  micBtn.style.border = 'none';
+  micBtn.style.background = config.color;
+  micBtn.style.color = '#fff';
+  micBtn.style.padding = '10px';
+  micBtn.style.cursor = 'pointer';
+
   const sendBtn = document.createElement('button');
   sendBtn.textContent = '➤';
+  sendBtn.style.border = 'none';
+  sendBtn.style.background = config.color;
+  sendBtn.style.color = '#fff';
+  sendBtn.style.padding = '10px';
+  sendBtn.style.cursor = 'pointer';
 
-  [micBtn, sendBtn].forEach(btn => {
-    Object.assign(btn.style, {
-      padding: '10px', borderRadius: '50%', border: 'none',
-      background: config.color, color: '#fff', cursor: 'pointer'
-    });
+  inputBox.appendChild(input);
+  inputBox.appendChild(micBtn);
+  inputBox.appendChild(sendBtn);
+  widget.appendChild(inputBox);
+
+  const footerNav = document.createElement('div');
+  footerNav.style.display = 'flex';
+  footerNav.style.justifyContent = 'space-around';
+  footerNav.style.marginTop = '16px';
+  footerNav.style.background = '#fff';
+  footerNav.style.borderRadius = '12px';
+  footerNav.style.padding = '8px';
+
+  const vocalTab = document.createElement('div');
+  vocalTab.textContent = '🎤 Vocal';
+  vocalTab.style.cursor = 'pointer';
+  vocalTab.style.fontWeight = 'bold';
+
+  const textTab = document.createElement('div');
+  textTab.textContent = '💬 Texte';
+  textTab.style.cursor = 'pointer';
+
+  [vocalTab, textTab].forEach(tab => {
+    tab.onclick = () => {
+      vocalTab.style.color = textTab.style.color = '#000';
+      tab.style.color = config.color;
+    };
   });
 
-  footer.appendChild(input);
-  footer.appendChild(micBtn);
-  footer.appendChild(sendBtn);
-  widget.appendChild(footer);
+  footerNav.appendChild(vocalTab);
+  footerNav.appendChild(textTab);
+  widget.appendChild(footerNav);
 
-  // RGPD
   const rgpd = document.createElement('a');
   rgpd.href = config.rgpdLink;
-  rgpd.target = '_blank';
   rgpd.textContent = 'Politique de confidentialité';
-  Object.assign(rgpd.style, {
-    fontSize: '10px', color: '#888', marginTop: '6px', alignSelf: 'flex-end'
-  });
+  rgpd.target = '_blank';
+  rgpd.style.fontSize = '11px';
+  rgpd.style.color = '#eee';
+  rgpd.style.marginTop = '6px';
+  rgpd.style.textAlign = 'right';
   widget.appendChild(rgpd);
 
-  openBtn.onclick = () => {
-    widget.style.display = 'flex';
-    openBtn.style.display = 'none';
-  };
-  closeBtn.onclick = () => {
-    widget.style.display = 'none';
-    openBtn.style.display = 'block';
-  };
-
+  // Envoi vocal ou texte
   micBtn.onclick = () => {
     recognition.start();
-    micBtn.disabled = true;
-    micBtn.textContent = '🎙️';
   };
 
   recognition.onresult = e => {
     const txt = e.results[e.results.length - 1][0].transcript;
-    micBtn.disabled = false;
-    micBtn.textContent = '🎤';
-    handleMessage(txt);
+    sendMessage(txt);
   };
 
   sendBtn.onclick = () => {
-    const msg = input.value.trim();
-    if (msg) handleMessage(msg);
-    input.value = '';
+    if (input.value.trim()) {
+      sendMessage(input.value);
+      input.value = '';
+    }
   };
 
-  function appendMessage(text, sender = 'bot') {
-    const msg = document.createElement('div');
-    msg.textContent = text;
-    Object.assign(msg.style, {
-      margin: '6px 0', alignSelf: sender === 'user' ? 'flex-end' : 'flex-start',
-      background: sender === 'user' ? '#dceeff' : '#f4f4f4',
-      padding: '8px 12px', borderRadius: '14px', maxWidth: '85%'
-    });
-    chat.appendChild(msg);
-    chat.scrollTop = chat.scrollHeight;
-  }
-
-  function handleMessage(text) {
-    appendMessage(text, 'user');
+  function sendMessage(msg) {
     fetch(`${backendUrl}/api/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, message: text, clientId })
+      body: JSON.stringify({ userId, message: msg, clientId })
     })
-      .then(res => res.json())
+      .then(r => r.json())
       .then(data => {
-        appendMessage(data.text || '(Pas de réponse)', 'bot');
         if (data.audioUrl) new Audio(data.audioUrl).play();
       });
   }
