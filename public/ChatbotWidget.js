@@ -62,8 +62,9 @@ function initChatbot(config, backendUrl, clientId) {
     display: 'none', flexDirection: 'column', width: '350px',
     maxWidth: '90vw', background: `linear-gradient(to bottom, ${config.color}, #d7dcfa)`,
     color: '#000', borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-    padding: '20px', fontFamily: 'sans-serif'
+    padding: '20px', fontFamily: 'sans-serif', maxHeight: '90vh'
   });
+  widget.classList.add('custom-chatbot-widget');
   container.appendChild(widget);
 
   launcher.onclick = () => {
@@ -234,4 +235,17 @@ function initChatbot(config, backendUrl, clientId) {
         if (data.audioUrl) new Audio(data.audioUrl).play();
       });
   }
+
+  // 🪄 RESPONSIVE MOBILE — limite max hauteur et largeur
+  const style = document.createElement('style');
+  style.textContent = `
+    @media (max-width: 480px) {
+      .custom-chatbot-widget {
+        width: 90vw !important;
+        max-height: 85vh !important;
+        border-radius: 16px !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
 }
