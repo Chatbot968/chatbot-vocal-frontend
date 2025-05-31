@@ -15,7 +15,7 @@ async function loadAndInitChatbot() {
   if (widgetScript && widgetScript.getAttribute('data-client-id')) {
     clientId = widgetScript.getAttribute('data-client-id');
   } else {
-    clientId = "client_demo"; // fallback si jamais
+    clientId = "clnovacorp.json"; // fallback si jamais
   }
   // === Ajout backend dynamique ===
   if (widgetScript && widgetScript.getAttribute('data-backend-url')) {
