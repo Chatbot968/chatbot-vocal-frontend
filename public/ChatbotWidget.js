@@ -1,4 +1,4 @@
-// === Chatbot vocal avec layout "app mobile" moderne, switch vocal/texte, logo client, suggestions dynamiques ===
+// === Chatbot vocal avec layout mobile clean, suggestions dynamiques, switch vocal/texte, logo & couleur personnalisables ===
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 if (!SpeechRecognition) alert("❌ Chatbot vocal non supporté sur ce navigateur");
@@ -11,6 +11,7 @@ async function loadAndInitChatbot() {
 
   let config = {
     color: "#0078d4",
+    bgGradient: "linear-gradient(to bottom, #2d6cdf, #d7dcfa)",
     logoUrl: null,
     suggestions: [
       "Je souhaite prendre rendez-vous",
@@ -42,6 +43,8 @@ function initChatbot(config, backendUrl, clientId) {
     return id;
   })();
 
+  let isTextMode = false;
+
   const container = document.createElement('div');
   container.style.position = 'fixed';
   container.style.bottom = '20px';
@@ -51,26 +54,18 @@ function initChatbot(config, backendUrl, clientId) {
 
   const launcher = document.createElement('button');
   launcher.textContent = '🤖';
-  launcher.style.fontSize = '28px';
-  launcher.style.border = 'none';
-  launcher.style.background = config.color;
-  launcher.style.color = '#fff';
-  launcher.style.borderRadius = '50%';
-  launcher.style.padding = '10px';
-  launcher.style.cursor = 'pointer';
+  Object.assign(launcher.style, {
+    fontSize: '28px', border: 'none', background: config.color,
+    color: '#fff', borderRadius: '50%', padding: '10px', cursor: 'pointer'
+  });
   container.appendChild(launcher);
 
   const widget = document.createElement('div');
-  widget.style.display = 'none';
-  widget.style.flexDirection = 'column';
-  widget.style.width = '350px';
-  widget.style.maxWidth = '90vw';
-  widget.style.background = 'linear-gradient(to bottom, #2d6cdf, #d7dcfa)';
-  widget.style.color = '#000';
-  widget.style.borderRadius = '20px';
-  widget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)';
-  widget.style.padding = '20px';
-  widget.style.fontFamily = 'sans-serif';
+  Object.assign(widget.style, {
+    display: 'none', flexDirection: 'column', width: '350px', maxWidth: '90vw',
+    background: config.bgGradient, color: '#000', borderRadius: '20px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.3)', padding: '20px', fontFamily: 'sans-serif'
+  });
   container.appendChild(widget);
 
   launcher.onclick = () => {
@@ -78,7 +73,6 @@ function initChatbot(config, backendUrl, clientId) {
     widget.style.display = 'flex';
   };
 
-  // Header avec logo + bouton fermeture
   const header = document.createElement('div');
   header.style.display = 'flex';
   header.style.justifyContent = 'space-between';
@@ -92,10 +86,9 @@ function initChatbot(config, backendUrl, clientId) {
 
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '✕';
-  closeBtn.style.border = 'none';
-  closeBtn.style.background = 'none';
-  closeBtn.style.fontSize = '20px';
-  closeBtn.style.cursor = 'pointer';
+  Object.assign(closeBtn.style, {
+    border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer'
+  });
   closeBtn.onclick = () => {
     widget.style.display = 'none';
     launcher.style.display = 'inline-block';
@@ -103,25 +96,24 @@ function initChatbot(config, backendUrl, clientId) {
   header.appendChild(closeBtn);
   widget.appendChild(header);
 
-  const title = document.createElement('h2');
-  title.innerHTML = "Hi there 👋<br><strong>How can we help?</strong>";
+  const title = document.createElement('div');
+  title.innerHTML = "<strong>Bonjour 👋<br>Que puis-je faire pour vous ?</strong>";
   title.style.margin = '16px 0';
   title.style.color = '#fff';
+  title.style.fontSize = '16px';
   widget.appendChild(title);
 
-  // Suggestions
   const suggBox = document.createElement('div');
-  suggBox.style.background = '#fff';
-  suggBox.style.borderRadius = '12px';
-  suggBox.style.padding = '12px';
-  suggBox.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)';
-
+  Object.assign(suggBox.style, {
+    background: '#fff', borderRadius: '12px', padding: '12px',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.2)', marginBottom: '14px'
+  });
   config.suggestions.forEach(s => {
     const item = document.createElement('div');
     item.textContent = s;
-    item.style.padding = '8px 0';
-    item.style.borderBottom = '1px solid #eee';
-    item.style.cursor = 'pointer';
+    Object.assign(item.style, {
+      padding: '8px 0', borderBottom: '1px solid #eee', cursor: 'pointer'
+    });
     item.onclick = () => sendMessage(s);
     suggBox.appendChild(item);
   });
@@ -129,34 +121,30 @@ function initChatbot(config, backendUrl, clientId) {
 
   const inputBox = document.createElement('div');
   inputBox.style.display = 'flex';
-  inputBox.style.marginTop = '14px';
+  inputBox.style.marginTop = '8px';
   inputBox.style.background = '#fff';
   inputBox.style.borderRadius = '16px';
   inputBox.style.alignItems = 'center';
   inputBox.style.overflow = 'hidden';
 
   const input = document.createElement('input');
-  input.placeholder = 'Parlez ou tapez ici...';
-  input.style.flex = '1';
-  input.style.padding = '10px';
-  input.style.border = 'none';
-  input.style.outline = 'none';
+  input.placeholder = 'Écrivez votre message...';
+  Object.assign(input.style, {
+    flex: 1, padding: '10px', border: 'none', outline: 'none', display: 'none'
+  });
 
   const micBtn = document.createElement('button');
   micBtn.textContent = '🎤';
-  micBtn.style.border = 'none';
-  micBtn.style.background = config.color;
-  micBtn.style.color = '#fff';
-  micBtn.style.padding = '10px';
-  micBtn.style.cursor = 'pointer';
-
+  micBtn.style.display = 'block';
   const sendBtn = document.createElement('button');
   sendBtn.textContent = '➤';
-  sendBtn.style.border = 'none';
-  sendBtn.style.background = config.color;
-  sendBtn.style.color = '#fff';
-  sendBtn.style.padding = '10px';
-  sendBtn.style.cursor = 'pointer';
+
+  [micBtn, sendBtn].forEach(btn => {
+    Object.assign(btn.style, {
+      border: 'none', background: config.color,
+      color: '#fff', padding: '10px', cursor: 'pointer'
+    });
+  });
 
   inputBox.appendChild(input);
   inputBox.appendChild(micBtn);
@@ -166,7 +154,7 @@ function initChatbot(config, backendUrl, clientId) {
   const footerNav = document.createElement('div');
   footerNav.style.display = 'flex';
   footerNav.style.justifyContent = 'space-around';
-  footerNav.style.marginTop = '16px';
+  footerNav.style.marginTop = '10px';
   footerNav.style.background = '#fff';
   footerNav.style.borderRadius = '12px';
   footerNav.style.padding = '8px';
@@ -175,17 +163,32 @@ function initChatbot(config, backendUrl, clientId) {
   vocalTab.textContent = '🎤 Vocal';
   vocalTab.style.cursor = 'pointer';
   vocalTab.style.fontWeight = 'bold';
+  vocalTab.style.color = config.color;
 
   const textTab = document.createElement('div');
   textTab.textContent = '💬 Texte';
   textTab.style.cursor = 'pointer';
 
-  [vocalTab, textTab].forEach(tab => {
-    tab.onclick = () => {
-      vocalTab.style.color = textTab.style.color = '#000';
-      tab.style.color = config.color;
-    };
-  });
+  vocalTab.onclick = () => switchMode(false);
+  textTab.onclick = () => switchMode(true);
+
+  function switchMode(textMode) {
+    isTextMode = textMode;
+    if (isTextMode) {
+      input.style.display = 'block';
+      sendBtn.style.display = 'block';
+      micBtn.style.display = 'none';
+      vocalTab.style.color = '#000';
+      textTab.style.color = config.color;
+    } else {
+      input.style.display = 'none';
+      sendBtn.style.display = 'none';
+      micBtn.style.display = 'block';
+      textTab.style.color = '#000';
+      vocalTab.style.color = config.color;
+    }
+  }
+  switchMode(false);
 
   footerNav.appendChild(vocalTab);
   footerNav.appendChild(textTab);
@@ -195,17 +198,12 @@ function initChatbot(config, backendUrl, clientId) {
   rgpd.href = config.rgpdLink;
   rgpd.textContent = 'Politique de confidentialité';
   rgpd.target = '_blank';
-  rgpd.style.fontSize = '11px';
-  rgpd.style.color = '#eee';
-  rgpd.style.marginTop = '6px';
-  rgpd.style.textAlign = 'right';
+  Object.assign(rgpd.style, {
+    fontSize: '11px', color: '#eee', marginTop: '6px', textAlign: 'right', display: 'block'
+  });
   widget.appendChild(rgpd);
 
-  // Envoi vocal ou texte
-  micBtn.onclick = () => {
-    recognition.start();
-  };
-
+  micBtn.onclick = () => recognition.start();
   recognition.onresult = e => {
     const txt = e.results[e.results.length - 1][0].transcript;
     sendMessage(txt);
