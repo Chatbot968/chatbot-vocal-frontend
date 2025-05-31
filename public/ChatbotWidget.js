@@ -1,6 +1,16 @@
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (!SpeechRecognition) alert("❌ Chatbot vocal non supporté sur ce navigateur");
-else loadAndInitChatbot();
+// === Chatbot vocal responsive avec historique, suggestions masquées, fallback erreurs, UI mobile friendly ===
+
+// Vérification unique pour SpeechRecognition
+declareSpeechRecognition();
+
+function declareSpeechRecognition() {
+  if (!window._speechDeclared) {
+    window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    window._speechDeclared = true;
+  }
+  if (!window.SpeechRecognition) alert("❌ Chatbot vocal non supporté sur ce navigateur");
+  else loadAndInitChatbot();
+}
 
 async function loadAndInitChatbot() {
   const scriptTag = document.currentScript || document.querySelector('script[data-client-id]');
@@ -29,7 +39,7 @@ async function loadAndInitChatbot() {
 }
 
 function initChatbot(config, backendUrl, clientId) {
-  const recognition = new SpeechRecognition();
+  const recognition = new window.SpeechRecognition();
   recognition.lang = 'fr-FR';
   recognition.continuous = false;
   recognition.interimResults = false;
@@ -59,10 +69,10 @@ function initChatbot(config, backendUrl, clientId) {
 
   const widget = document.createElement('div');
   Object.assign(widget.style, {
-    display: 'none', flexDirection: 'column', width: '350px',
-    maxWidth: '90vw', background: `linear-gradient(to bottom, ${config.color}, #d7dcfa)`,
+    display: 'none', flexDirection: 'column', width: '350px', maxWidth: '90vw',
+    background: `linear-gradient(to bottom, ${config.color}, #d7dcfa)`,
     color: '#000', borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-    padding: '20px', fontFamily: 'sans-serif', maxHeight: '90vh'
+    padding: '20px', fontFamily: 'sans-serif', maxHeight: '90vh', overflow: 'hidden'
   });
   widget.classList.add('custom-chatbot-widget');
   container.appendChild(widget);
@@ -104,7 +114,7 @@ function initChatbot(config, backendUrl, clientId) {
   const suggBox = document.createElement('div');
   Object.assign(suggBox.style, {
     background: '#fff', borderRadius: '12px', padding: '12px',
-    boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+    boxShadow: '0 2px 6px rgba(0,0,0,0.2)', marginBottom: '12px'
   });
 
   config.suggestions.forEach(s => {
@@ -113,21 +123,30 @@ function initChatbot(config, backendUrl, clientId) {
     Object.assign(item.style, {
       padding: '8px 0', borderBottom: '1px solid #eee', cursor: 'pointer'
     });
-    item.onclick = () => sendMessage(s);
+    item.onclick = () => handleMessage(s);
     suggBox.appendChild(item);
   });
   widget.appendChild(suggBox);
 
+  const chatLog = document.createElement('div');
+  chatLog.style.flex = '1';
+  chatLog.style.overflowY = 'auto';
+  chatLog.style.maxHeight = '160px';
+  chatLog.style.marginBottom = '10px';
+  chatLog.style.padding = '8px';
+  chatLog.style.background = '#fdfdfd';
+  chatLog.style.borderRadius = '10px';
+  widget.appendChild(chatLog);
+
   const inputBox = document.createElement('div');
   inputBox.style.display = 'flex';
-  inputBox.style.marginTop = '14px';
   inputBox.style.background = '#fff';
   inputBox.style.borderRadius = '16px';
   inputBox.style.alignItems = 'center';
   inputBox.style.overflow = 'hidden';
 
   const input = document.createElement('input');
-  input.placeholder = 'Écrivez votre message...';
+  input.placeholder = 'Votre message...';
   Object.assign(input.style, {
     flex: '1', padding: '10px', border: 'none', outline: 'none'
   });
@@ -150,18 +169,6 @@ function initChatbot(config, backendUrl, clientId) {
   inputBox.appendChild(micBtn);
   inputBox.appendChild(sendBtn);
   widget.appendChild(inputBox);
-
-  function updateModeUI() {
-    if (isTextMode) {
-      input.style.display = 'inline-block';
-      sendBtn.style.display = 'inline-block';
-      micBtn.style.display = 'none';
-    } else {
-      input.style.display = 'none';
-      sendBtn.style.display = 'none';
-      micBtn.style.display = 'inline-block';
-    }
-  }
 
   const footerNav = document.createElement('div');
   footerNav.style.display = 'flex';
@@ -194,37 +201,48 @@ function initChatbot(config, backendUrl, clientId) {
     updateModeUI();
   };
 
+  function updateModeUI() {
+    if (isTextMode) {
+      input.style.display = 'inline-block';
+      sendBtn.style.display = 'inline-block';
+      micBtn.style.display = 'none';
+    } else {
+      input.style.display = 'none';
+      sendBtn.style.display = 'none';
+      micBtn.style.display = 'inline-block';
+    }
+  }
+
   footerNav.appendChild(vocalTab);
   footerNav.appendChild(textTab);
   widget.appendChild(footerNav);
-
-  updateModeUI();
 
   const rgpd = document.createElement('a');
   rgpd.href = config.rgpdLink;
   rgpd.textContent = 'Politique de confidentialité';
   rgpd.target = '_blank';
-  rgpd.style.fontSize = '11px';
-  rgpd.style.color = '#eee';
-  rgpd.style.marginTop = '6px';
-  rgpd.style.textAlign = 'right';
+  Object.assign(rgpd.style, {
+    fontSize: '11px', color: '#eee', marginTop: '6px', textAlign: 'right'
+  });
   widget.appendChild(rgpd);
 
   micBtn.onclick = () => recognition.start();
 
   recognition.onresult = e => {
     const txt = e.results[e.results.length - 1][0].transcript;
-    sendMessage(txt);
+    handleMessage(txt);
   };
 
   sendBtn.onclick = () => {
     if (input.value.trim()) {
-      sendMessage(input.value);
+      handleMessage(input.value);
       input.value = '';
     }
   };
 
-  function sendMessage(msg) {
+  function handleMessage(msg) {
+    suggBox.style.display = 'none';
+    appendMessage(msg, 'user');
     fetch(`${backendUrl}/api/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -232,26 +250,36 @@ function initChatbot(config, backendUrl, clientId) {
     })
       .then(r => r.json())
       .then(data => {
+        appendMessage(data.text || '(Pas de réponse)', 'bot');
         if (data.audioUrl) new Audio(data.audioUrl).play();
+      })
+      .catch(() => {
+        appendMessage("Désolé, le serveur est injoignable.", 'bot');
       });
   }
 
-  // 💡 Styles responsive mobile
+  function appendMessage(msg, sender) {
+    const div = document.createElement('div');
+    div.textContent = msg;
+    div.style.margin = '6px 0';
+    div.style.alignSelf = sender === 'user' ? 'flex-end' : 'flex-start';
+    div.style.background = sender === 'user' ? '#d0eaff' : '#f4f4f4';
+    div.style.padding = '8px 12px';
+    div.style.borderRadius = '14px';
+    div.style.maxWidth = '85%';
+    chatLog.appendChild(div);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  updateModeUI();
+
   const style = document.createElement('style');
   style.textContent = `
     @media (max-width: 480px) {
       .custom-chatbot-widget {
         width: 92vw !important;
-        max-height: 80vh !important;
-        overflow-y: auto !important;
-        padding: 16px !important;
+        max-height: 85vh !important;
         border-radius: 16px !important;
-      }
-      .custom-chatbot-widget input {
-        font-size: 14px !important;
-      }
-      .custom-chatbot-widget h2 {
-        font-size: 18px !important;
       }
     }
   `;
