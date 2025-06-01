@@ -132,6 +132,7 @@ function initChatbot(config, backendUrl, clientId) {
   });
   widget.appendChild(suggBox);
 
+  // Zone de discussion + bouton expand intégré dedans
   const chatLog = document.createElement('div');
   chatLog.style.flex = '1';
   chatLog.style.overflowY = 'auto';
@@ -140,6 +141,60 @@ function initChatbot(config, backendUrl, clientId) {
   chatLog.style.padding = '8px';
   chatLog.style.background = '#fdfdfd';
   chatLog.style.borderRadius = '10px';
+  chatLog.style.position = 'relative';
+  chatLog.style.transition = 'max-height 0.25s cubic-bezier(0.4,0.3,0.6,1)';
+
+  // === AJOUT : Bouton expand/reduce ===
+  const expandBtn = document.createElement('button');
+  expandBtn.innerHTML = '🗖';
+  Object.assign(expandBtn.style, {
+    position: 'absolute',
+    top: '8px',
+    right: '10px',
+    background: '#fff',
+    border: 'none',
+    color: '#888',
+    fontSize: '18px',
+    cursor: 'pointer',
+    zIndex: '10'
+  });
+  chatLog.appendChild(expandBtn);
+
+  const reduceBtn = document.createElement('button');
+  reduceBtn.textContent = '✕';
+  Object.assign(reduceBtn.style, {
+    position: 'absolute',
+    top: '8px',
+    right: '10px',
+    background: '#fff',
+    border: 'none',
+    color: '#888',
+    fontSize: '20px',
+    cursor: 'pointer',
+    zIndex: '10',
+    display: 'none'
+  });
+  chatLog.appendChild(reduceBtn);
+
+  let isExpanded = false;
+  expandBtn.onclick = () => {
+    isExpanded = true;
+    chatLog.style.maxHeight = '74vh';
+    chatLog.style.minHeight = '320px';
+    expandBtn.style.display = 'none';
+    reduceBtn.style.display = 'inline-block';
+    widget.style.maxHeight = '85vh';
+  };
+  reduceBtn.onclick = () => {
+    isExpanded = false;
+    chatLog.style.maxHeight = '160px';
+    chatLog.style.minHeight = '';
+    expandBtn.style.display = 'inline-block';
+    reduceBtn.style.display = 'none';
+    widget.style.maxHeight = '90vh';
+  };
+  // ===================
+
   widget.appendChild(chatLog);
 
   const inputBox = document.createElement('div');
