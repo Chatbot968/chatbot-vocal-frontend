@@ -1,3 +1,50 @@
+// === Chatbot vocal responsive avec HTML, images, historique, suggestions, mobile friendly ===
+
+// Ajout : charge la lib Markdown (NE CHARGE QU’UNE SEULE FOIS !)
+if (!window._markedLoaded) {
+  const markedScript = document.createElement('script');
+  markedScript.src = "https://cdn.jsdelivr.net/npm/marked/marked.min.js";
+  document.head.appendChild(markedScript);
+  window._markedLoaded = true;
+}
+
+declareSpeechRecognition();
+
+function declareSpeechRecognition() {
+  if (!window._speechDeclared) {
+    window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    window._speechDeclared = true;
+  }
+  if (!window.SpeechRecognition) alert("❌ Chatbot vocal non supporté sur ce navigateur");
+  else loadAndInitChatbot();
+}
+
+async function loadAndInitChatbot() {
+  const scriptTag = document.currentScript || document.querySelector('script[data-client-id]');
+  const clientId = scriptTag?.getAttribute('data-client-id') || "novacorp";
+  const backendUrl = scriptTag?.getAttribute('data-backend-url') || "https://chatbot-vocal-backend.onrender.com";
+
+  let config = {
+    color: "#0078d4",
+    logoUrl: null,
+    suggestions: [
+      "Je souhaite prendre rendez-vous",
+      "Quels sont vos services ?",
+      "J’aimerais en savoir plus sur vos tarifs"
+    ],
+    rgpdLink: "/politique-confidentialite.html"
+  };
+
+  try {
+    const res = await fetch(`${backendUrl}/config/${clientId}.json`);
+    if (res.ok) config = await res.json();
+  } catch (e) {
+    console.warn("[Chatbot] Config non chargée, fallback utilisé.");
+  }
+
+  initChatbot(config, backendUrl, clientId);
+}
+
 function initChatbot(config, backendUrl, clientId) {
   const recognition = new window.SpeechRecognition();
   recognition.lang = 'fr-FR';
@@ -18,13 +65,11 @@ function initChatbot(config, backendUrl, clientId) {
   container.style.bottom = '20px';
   container.style.right = '20px';
   container.style.zIndex = '9999';
+  // Pour debug visibilité si besoin :
+  // container.style.background = 'rgba(255,0,0,0.05)';
   document.body.appendChild(container);
 
-  // On crée un shadow root sur ce container
   const shadow = container.attachShadow({ mode: 'open' });
-
-  // On place TOUT le code UI à partir d'ici DANS le shadow root (pas dans document.body)
-  // Et tous les éléments suivants doivent être créés DANS shadow, PAS dans container/document.body
 
   // === Launcher button (🤖) ===
   const launcher = document.createElement('button');
@@ -333,7 +378,7 @@ function initChatbot(config, backendUrl, clientId) {
 
   updateModeUI();
 
-  // *** Place les styles ICI dans le SHADOW DOM ***
+  // Place bien les STYLES DANS le SHADOW DOM !
   const style = document.createElement('style');
   style.textContent = `
     @media (max-width: 480px) {
