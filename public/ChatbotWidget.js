@@ -1,6 +1,5 @@
-// === Chatbot vocal responsive avec historique, suggestions masquées, fallback erreurs, UI mobile friendly ===
+// === Chatbot vocal responsive avec HTML, images, historique, suggestions, mobile friendly ===
 
-// Vérification unique pour SpeechRecognition
 declareSpeechRecognition();
 
 function declareSpeechRecognition() {
@@ -250,7 +249,7 @@ function initChatbot(config, backendUrl, clientId) {
     })
       .then(r => r.json())
       .then(data => {
-        appendMessage(data.text || '(Pas de réponse)', 'bot');
+        appendMessage(data.text || '(Pas de réponse)', 'bot', true);
         if (data.audioUrl) new Audio(data.audioUrl).play();
       })
       .catch(() => {
@@ -258,15 +257,20 @@ function initChatbot(config, backendUrl, clientId) {
       });
   }
 
-  function appendMessage(msg, sender) {
+  function appendMessage(msg, sender, isHTML = false) {
     const div = document.createElement('div');
-    div.textContent = msg;
     div.style.margin = '6px 0';
     div.style.alignSelf = sender === 'user' ? 'flex-end' : 'flex-start';
     div.style.background = sender === 'user' ? '#d0eaff' : '#f4f4f4';
     div.style.padding = '8px 12px';
     div.style.borderRadius = '14px';
     div.style.maxWidth = '85%';
+    div.style.overflowWrap = 'break-word';
+    if (isHTML && sender === 'bot') {
+      div.innerHTML = DOMPurify.sanitize(msg, { ALLOWED_TAGS: ['b', 'i', 'strong', 'a', 'img', 'br', 'ul', 'li', 'p'], ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'target'] });
+    } else {
+      div.textContent = msg;
+    }
     chatLog.appendChild(div);
     chatLog.scrollTop = chatLog.scrollHeight;
   }
@@ -281,6 +285,15 @@ function initChatbot(config, backendUrl, clientId) {
         max-height: 85vh !important;
         border-radius: 16px !important;
       }
+    }
+    .custom-chatbot-widget img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin-top: 6px;
+    }
+    .custom-chatbot-widget a {
+      color: ${config.color};
+      text-decoration: underline;
     }
   `;
   document.head.appendChild(style);
