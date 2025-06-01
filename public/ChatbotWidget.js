@@ -1,5 +1,10 @@
 // === Chatbot vocal responsive avec HTML, images, historique, suggestions, mobile friendly ===
 
+// Ajout : charge la lib Markdown
+const markedScript = document.createElement('script');
+markedScript.src = "https://cdn.jsdelivr.net/npm/marked/marked.min.js";
+document.head.appendChild(markedScript);
+
 declareSpeechRecognition();
 
 function declareSpeechRecognition() {
@@ -267,7 +272,11 @@ function initChatbot(config, backendUrl, clientId) {
     div.style.maxWidth = '85%';
     div.style.overflowWrap = 'break-word';
     if (isHTML && sender === 'bot') {
-      div.innerHTML = DOMPurify.sanitize(msg, { ALLOWED_TAGS: ['b', 'i', 'strong', 'a', 'img', 'br', 'ul', 'li', 'p'], ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'target'] });
+      const html = marked.parse(msg);
+      div.innerHTML = DOMPurify.sanitize(html, {
+        ALLOWED_TAGS: ['b', 'i', 'strong', 'a', 'img', 'br', 'ul', 'li', 'p'],
+        ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'target']
+      });
     } else {
       div.textContent = msg;
     }
