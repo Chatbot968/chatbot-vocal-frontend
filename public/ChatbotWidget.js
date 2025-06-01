@@ -244,9 +244,33 @@ function initChatbot(config, backendUrl, clientId) {
     }
   };
 
+  // Ajout loader à ce niveau
+  let loader = null;
+  function showLoader() {
+    if (!loader) {
+      loader = document.createElement('div');
+      loader.className = 'chatbot-loader-bubbles';
+      loader.innerHTML = `<span></span><span></span><span></span>`;
+      loader.style.alignSelf = 'flex-start';
+      loader.style.margin = '6px 0';
+      loader.style.background = '#f4f4f4';
+      loader.style.padding = '8px 12px';
+      loader.style.borderRadius = '14px';
+      loader.style.maxWidth = '85%';
+      loader.style.display = 'flex';
+      loader.style.gap = '3px';
+    }
+    chatLog.appendChild(loader);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+  function hideLoader() {
+    if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
+  }
+
   function handleMessage(msg) {
     suggBox.style.display = 'none';
     appendMessage(msg, 'user');
+    showLoader();
     fetch(`${backendUrl}/api/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -254,10 +278,12 @@ function initChatbot(config, backendUrl, clientId) {
     })
       .then(r => r.json())
       .then(data => {
+        hideLoader();
         appendMessage(data.text || '(Pas de réponse)', 'bot', true);
         if (data.audioUrl) new Audio(data.audioUrl).play();
       })
       .catch(() => {
+        hideLoader();
         appendMessage("Désolé, le serveur est injoignable.", 'bot');
       });
   }
@@ -303,6 +329,25 @@ function initChatbot(config, backendUrl, clientId) {
     .custom-chatbot-widget a {
       color: ${config.color};
       text-decoration: underline;
+    }
+    .chatbot-loader-bubbles {
+      display: flex; align-items: center; height: 22px;
+    }
+    .chatbot-loader-bubbles span {
+      width: 6px; height: 6px; margin: 0 2px;
+      background: #a6b5df;
+      border-radius: 50%; display: inline-block;
+      opacity: 0.7; animation: chatbot-bounce 1s infinite both;
+    }
+    .chatbot-loader-bubbles span:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+    .chatbot-loader-bubbles span:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+    @keyframes chatbot-bounce {
+      0%, 80%, 100% { transform: scale(0.8); opacity: 0.7; }
+      40% { transform: scale(1.3); opacity: 1; }
     }
   `;
   document.head.appendChild(style);
