@@ -333,7 +333,8 @@ function initChatbot(config, backendUrl, clientId) {
     fetch(`${backendUrl}/api/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, message: msg, clientId })
+      body: JSON.stringify({ userId, message: msg, clientId, vocalMode: !isTextMode })
+  // Ici, vocalMode sera true si tu es en mode vocal, false sinon !
     })
       .then(r => r.json())
       .then(data => {
