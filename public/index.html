@@ -1,23 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
+    <meta name="description" content="Web site created using create-react-app" />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <title>React App</title>
+
+    <!-- ✅ Ajout de DOMPurify pour sécuriser et afficher le HTML dans le chatbot -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.3/dist/purify.min.js"></script>
   </head>
   <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <noscript>JavaScript est requis pour utiliser cette application.</noscript>
     <div id="root"></div>
 
-    <!-- 👉 Script pour activer Lya le chatbot vocal -->
+    <!-- 🧠 Ton widget vocal -->
     <script src="%PUBLIC_URL%/ChatbotWidget.js" data-config="%PUBLIC_URL%/data.json"></script>
   </body>
 </html>
