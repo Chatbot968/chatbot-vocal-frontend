@@ -322,6 +322,7 @@ function initChatbot(config, backendUrl, clientId) {
     if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
   }
 
+  // === ICI SEULEMENT la modif : audio uniquement en mode vocal ===
   function handleMessage(msg) {
     suggBox.style.display = 'none';
     appendMessage(msg, 'user');
@@ -335,7 +336,8 @@ function initChatbot(config, backendUrl, clientId) {
       .then(data => {
         hideLoader();
         appendMessage(data.text || '(Pas de réponse)', 'bot', true);
-        if (data.audioUrl) new Audio(data.audioUrl).play();
+        // Ne joue l'audio QUE si on est en mode vocal
+        if (!isTextMode && data.audioUrl) new Audio(data.audioUrl).play();
       })
       .catch(() => {
         hideLoader();
