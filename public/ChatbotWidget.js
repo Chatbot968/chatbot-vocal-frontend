@@ -1,12 +1,6 @@
 // === Chatbot vocal responsive avec HTML, images, historique, suggestions, mobile friendly ===
 
-// Ajout : charge la lib Markdown (NE CHARGE QU’UNE SEULE FOIS !)
-if (!window._markedLoaded) {
-  const markedScript = document.createElement('script');
-  markedScript.src = "https://cdn.jsdelivr.net/npm/marked/marked.min.js";
-  document.head.appendChild(markedScript);
-  window._markedLoaded = true;
-}
+// (SUPPRIMÉ : le bloc de chargement dynamique de marked.min.js, car on le charge en dur dans le <head>)
 
 declareSpeechRecognition();
 
@@ -364,6 +358,7 @@ function initChatbot(config, backendUrl, clientId) {
     div.style.maxWidth = '85%';
     div.style.overflowWrap = 'break-word';
     if (isHTML && sender === 'bot') {
+      // Ici marked et DOMPurify sont dispo grâce aux balises <script> dans le <head>
       const html = marked.parse(msg);
       div.innerHTML = DOMPurify.sanitize(html, {
         ALLOWED_TAGS: ['b', 'i', 'strong', 'a', 'img', 'br', 'ul', 'li', 'p'],
