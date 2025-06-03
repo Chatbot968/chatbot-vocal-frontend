@@ -450,6 +450,8 @@ function initChatbot(config, backendUrl, clientId) {
     })
       .then(r => r.json())
       .then(data => {
+        // AJOUT DEBUG NON INTRUSIF ICI
+        console.log('[DEBUG FRONT] Reçu du backend:', data);
         hideLoader();
         appendMessage(data.text || '(Pas de réponse)', 'bot', true);
         // Audio seulement en mode vocal
