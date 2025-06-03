@@ -10,7 +10,7 @@
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <title>React App</title>
 
-    <!-- ✅ Ajout de DOMPurify pour sécuriser et afficher le HTML dans le chatbot -->
+    <!-- ✅ Ajout des librairies pour le chatbot -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.3/dist/purify.min.js"></script>
   </head>
@@ -18,7 +18,11 @@
     <noscript>JavaScript est requis pour utiliser cette application.</noscript>
     <div id="root"></div>
 
-    <!-- 🧠 Ton widget vocal -->
-    <script src="%PUBLIC_URL%/ChatbotWidget.js" data-config="%PUBLIC_URL%/data.json"></script>
+    <!-- 🧠 Appel du widget vocal multi-client -->
+    <script
+      src="%PUBLIC_URL%/ChatbotWidget.js"
+      data-client-id="novacorp"
+      data-backend-url="https://chatbot-vocal-backend.onrender.com">
+    </script>
   </body>
 </html>

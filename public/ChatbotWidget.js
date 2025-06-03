@@ -16,7 +16,7 @@ async function loadAndInitChatbot() {
   const backendUrl = scriptTag?.getAttribute('data-backend-url') || "https://chatbot-vocal-backend.onrender.com";
   let config = {
     color: "#0078d4",
-    logoUrl: null,
+    logo: null, // fix: nom du champ
     suggestions: [
       "Je souhaite prendre rendez-vous",
       "Quels sont vos services ?",
@@ -26,11 +26,39 @@ async function loadAndInitChatbot() {
   };
   try {
     const res = await fetch(`${backendUrl}/config/${clientId}.json`);
-    if (res.ok) config = await res.json();
+    if (res.ok) {
+      const cfg = await res.json();
+      config = { ...config, ...cfg }; // merge pour fallback auto sur les clés manquantes
+      // Correction automatique du champ logo/logoUrl
+      if (cfg.logo && !cfg.logoUrl) config.logoUrl = cfg.logo;
+      if (!cfg.logo && cfg.logoUrl) config.logo = cfg.logoUrl;
+    } else {
+      showAlert("Erreur de config : impossible de charger la configuration client.");
+    }
   } catch (e) {
-    console.warn("[Chatbot] Config non chargée, fallback utilisé.");
+    showAlert("Erreur réseau : la configuration du chatbot n'a pas pu être chargée.");
   }
   initChatbot(config, backendUrl, clientId);
+}
+
+function showAlert(msg) {
+  // Simple UI pour prévenir l'utilisateur en cas de gros bug backend/config
+  let exist = document.querySelector('#chatbot-global-alert');
+  if (exist) exist.remove();
+  const div = document.createElement('div');
+  div.id = 'chatbot-global-alert';
+  div.style.position = 'fixed';
+  div.style.bottom = '10px';
+  div.style.right = '10px';
+  div.style.background = '#f23';
+  div.style.color = '#fff';
+  div.style.fontWeight = 'bold';
+  div.style.padding = '16px 24px';
+  div.style.borderRadius = '12px';
+  div.style.zIndex = '999999';
+  div.textContent = msg;
+  document.body.appendChild(div);
+  setTimeout(() => { if (div.parentNode) div.parentNode.removeChild(div); }, 6500);
 }
 
 function initChatbot(config, backendUrl, clientId) {
@@ -93,9 +121,10 @@ function initChatbot(config, backendUrl, clientId) {
   header.style.alignItems = 'center';
 
   const logo = document.createElement('img');
-  logo.src = config.logoUrl || '';
+  logo.src = config.logoUrl || config.logo || '';
   logo.alt = 'Logo';
   logo.style.height = '30px';
+  logo.onerror = () => { logo.style.display = "none"; }; // si image cassée
   header.appendChild(logo);
 
   const closeBtn = document.createElement('button');
@@ -131,7 +160,7 @@ function initChatbot(config, backendUrl, clientId) {
     background: '#fff', borderRadius: '12px', padding: '12px',
     boxShadow: '0 2px 6px rgba(0,0,0,0.2)', marginBottom: '12px'
   });
-  config.suggestions.forEach(s => {
+  (config.suggestions || []).forEach(s => {
     const item = document.createElement('div');
     item.textContent = s;
     Object.assign(item.style, {
@@ -219,10 +248,6 @@ function initChatbot(config, backendUrl, clientId) {
   Object.assign(input.style, {
     flex: '1', padding: '10px', border: 'none', outline: 'none'
   });
-
-  // Ancien bouton micro (on ne l'affiche plus du tout)
-  // const micBtn = document.createElement('button');
-  // micBtn.textContent = '🎤';
 
   const sendBtn = document.createElement('button');
   sendBtn.textContent = '➤';
@@ -402,7 +427,7 @@ function initChatbot(config, backendUrl, clientId) {
     if (sender === 'bot') {
       // Avatar bot à gauche
       const avatar = document.createElement('span');
-      avatar.textContent = '🤖'; // Tu peux mettre une image ici si tu veux !
+      avatar.textContent = '🤖'; // Peut remplacer par un img plus tard si besoin
       avatar.style.fontSize = "22px";
       avatar.style.marginRight = "8px";
       msgRow.appendChild(avatar);
@@ -455,14 +480,19 @@ function initChatbot(config, backendUrl, clientId) {
         hideLoader();
         appendMessage(data.text || '(Pas de réponse)', 'bot', true);
         // Audio seulement en mode vocal
-        if (!isTextMode && data.audioUrl) {
-          currentAudio = new Audio(data.audioUrl);
-          currentAudio.play();
+        if (!isTextMode) {
+          if (data.audioUrl) {
+            currentAudio = new Audio(data.audioUrl);
+            currentAudio.play();
+          } else {
+            appendMessage("(Réponse vocale indisponible pour ce message)", 'bot');
+          }
         }
       })
-      .catch(() => {
+      .catch((err) => {
         hideLoader();
         appendMessage("Désolé, le serveur est injoignable.", 'bot');
+        showAlert("Erreur : le backend du chatbot n'est pas joignable.");
       });
   }
 
@@ -491,9 +521,7 @@ function initChatbot(config, backendUrl, clientId) {
       0%, 80%, 100% { transform: scale(0.8); opacity: 0.7; }
       40% { transform: scale(1.3); opacity: 1; }
     }
-    /* Style du bouton CHAT VOCAL noir */
     button:focus { outline: 2px solid #009fff77 !important; }
-    /* Message fade anim */
     .msg-fadein { animation: fadeInUp 0.4s; }
     @keyframes fadeInUp { from { opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
   `;
