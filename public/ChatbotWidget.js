@@ -1,13 +1,4 @@
-// === Chatbot vocal responsive avec HTML, images, historique, suggestions, mobile friendly ===
-
-// Ajout : charge la lib Markdown (NE CHARGE QU’UNE SEULE FOIS !)
-if (!window._markedLoaded) {
-  const markedScript = document.createElement('script');
-  markedScript.src = "https://cdn.jsdelivr.net/npm/marked/marked.min.js";
-  document.head.appendChild(markedScript);
-  window._markedLoaded = true;
-}
-
+// === Chatbot vocal responsive avec visuel vocal CTA, avatars, anim, suggestions, etc. ===
 declareSpeechRecognition();
 
 function declareSpeechRecognition() {
@@ -34,7 +25,7 @@ async function loadAndInitChatbot() {
     rgpdLink: "/politique-confidentialite.html"
   };
   try {
-    const res = await fetch(${backendUrl}/config/${clientId}.json);
+    const res = await fetch(`${backendUrl}/config/${clientId}.json`);
     if (res.ok) config = await res.json();
   } catch (e) {
     console.warn("[Chatbot] Config non chargée, fallback utilisé.");
@@ -64,8 +55,6 @@ function initChatbot(config, backendUrl, clientId) {
   container.style.bottom = '20px';
   container.style.right = '20px';
   container.style.zIndex = '9999';
-  // Pour debug visibilité si besoin :
-  // container.style.background = 'rgba(255,0,0,0.05)';
   document.body.appendChild(container);
 
   const shadow = container.attachShadow({ mode: 'open' });
@@ -83,7 +72,7 @@ function initChatbot(config, backendUrl, clientId) {
   const widget = document.createElement('div');
   Object.assign(widget.style, {
     display: 'none', flexDirection: 'column', width: '350px', maxWidth: '90vw',
-    background: linear-gradient(to bottom, ${config.color}, #d7dcfa),
+    background: `linear-gradient(to bottom, ${config.color}, #d7dcfa)`,
     color: '#000', borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
     padding: '20px', fontFamily: 'sans-serif', maxHeight: '90vh', overflow: 'hidden'
   });
@@ -382,7 +371,7 @@ function initChatbot(config, backendUrl, clientId) {
     if (!loader) {
       loader = document.createElement('div');
       loader.className = 'chatbot-loader-bubbles';
-      loader.innerHTML = <span></span><span></span><span></span>;
+      loader.innerHTML = `<span></span><span></span><span></span>`;
       loader.style.alignSelf = 'flex-start';
       loader.style.margin = '6px 0';
       loader.style.background = '#f4f4f4';
@@ -399,30 +388,7 @@ function initChatbot(config, backendUrl, clientId) {
     if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
   }
 
-  // === ICI SEULEMENT la modif : audio uniquement en mode vocal ===
-  function handleMessage(msg) {
-    suggBox.style.display = 'none';
-    appendMessage(msg, 'user');
-    showLoader();
-    fetch(`${backendUrl}/api/ask`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, message: msg, clientId, vocalMode: !isTextMode })
-  // Ici, vocalMode sera true si tu es en mode vocal, false sinon !
-    })
-      .then(r => r.json())
-      .then(data => {
-        hideLoader();
-        appendMessage(data.text || '(Pas de réponse)', 'bot', true);
-        // Ne joue l'audio QUE si on est en mode vocal
-        if (!isTextMode && data.audioUrl) new Audio(data.audioUrl).play();
-      })
-      .catch(() => {
-        hideLoader();
-        appendMessage("Désolé, le serveur est injoignable.", 'bot');
-      });
-  }
-
+  // -- Ajout avatar bot, anim fadeIn, gestion audio --
   function appendMessage(msg, sender, isHTML = false) {
     const msgRow = document.createElement('div');
     msgRow.style.display = 'flex';
@@ -453,7 +419,6 @@ function initChatbot(config, backendUrl, clientId) {
     div.style.overflowWrap = 'break-word';
     div.style.fontSize = "1em";
     if (isHTML && sender === 'bot') {
-      // Ici marked et DOMPurify sont dispo grâce aux balises <script> dans le <head>
       const html = marked.parse(msg);
       div.innerHTML = DOMPurify.sanitize(html, {
         ALLOWED_TAGS: ['b', 'i', 'strong', 'a', 'img', 'br', 'ul', 'li', 'p'],
@@ -503,7 +468,7 @@ function initChatbot(config, backendUrl, clientId) {
 
   // Place bien les STYLES DANS le SHADOW DOM !
   const style = document.createElement('style');
-  style.textContent = 
+  style.textContent = `
     @media (max-width: 480px) {
       .custom-chatbot-widget { width: 92vw !important; max-height: 85vh !important; border-radius: 16px !important; }
     }
@@ -524,6 +489,11 @@ function initChatbot(config, backendUrl, clientId) {
       0%, 80%, 100% { transform: scale(0.8); opacity: 0.7; }
       40% { transform: scale(1.3); opacity: 1; }
     }
+    /* Style du bouton CHAT VOCAL noir */
+    button:focus { outline: 2px solid #009fff77 !important; }
+    /* Message fade anim */
+    .msg-fadein { animation: fadeInUp 0.4s; }
+    @keyframes fadeInUp { from { opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
   `;
-  document.head.appendChild(style);
+  shadow.appendChild(style);
 }
