@@ -602,9 +602,9 @@ function initChatbot(config, backendUrl, clientId) {
         width: 70vw !important;
         max-width: 75vw !important;
         min-width: 0 !important;
-        left: 50% !important;
+        left: 80% !important;
         transform: translateX(-50%) !important;
-        right: 5% !important;
+        right: unset !important;
         bottom: 2vw !important;
         border-radius: 18px !important;
         box-shadow: 0 8px 32px #0002 !important;
