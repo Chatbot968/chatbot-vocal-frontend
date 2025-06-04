@@ -79,21 +79,32 @@ function initChatbot(config, backendUrl, clientId) {
   // ========== FONCTION CLOSE WIDGET (DÉCLARÉE EN PREMIER POUR SÉCURITÉ GLOBALE) ==========
   let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, isWidgetOpen = false;
   function closeWidget() {
-    // PATCH : Affichage debug
-    console.log('[DEBUG] closeWidget appelée');
-    if (!widget || !launcher) return;
-    widget.style.display = 'none';
-    launcher.style.display = 'inline-block';
-    isWidgetOpen = false;
-    // SÉCURITÉ : On “nettoie” tous les display parasites (pour certains navigateurs mobiles)
-    widget.style.maxHeight = '';
-    widget.style.minHeight = '';
-    widget.style.position = '';
-    if (chatLog) chatLog.style.display = 'none';
-    if (inputBox) inputBox.style.display = 'none';
-    if (vocalCtaBox) vocalCtaBox.style.display = 'none';
-    if (suggBox) suggBox.style.display = '';
+  console.log('[DEBUG] closeWidget appelée');
+  if (!widget || !launcher) return;
+  // 1. Masquer le widget dans le shadow DOM (panel)
+  widget.style.display = 'none';
+  // 2. Afficher le launcher (bouton 🤖)
+  launcher.style.display = 'inline-block';
+  isWidgetOpen = false;
+  // 3. Réinitialise les éléments internes
+  widget.style.maxHeight = '';
+  widget.style.minHeight = '';
+  widget.style.position = '';
+  if (chatLog) chatLog.style.display = 'none';
+  if (inputBox) inputBox.style.display = 'none';
+  if (vocalCtaBox) vocalCtaBox.style.display = 'none';
+  if (suggBox) suggBox.style.display = '';
+
+  // 4. PATCH “BULLDOZER” mobile : force la fermeture sur tous les navigateurs mobiles récalcitrants
+  // Si tu veux VRAIMENT tout virer du DOM : dé-commente la ligne suivante :
+  // if (container && container.parentNode) container.parentNode.removeChild(container);
+
+  // 5. PATCH : Scrolling mobile, bug d’ancrage
+  if (window.innerWidth < 500) {
+    document.body.style.overflow = '';
+    window.scrollTo(0, 0);
   }
+}
 
   // PATCH : Widget fermé au démarrage, même avec historique
   window.addEventListener('DOMContentLoaded', closeWidget);
