@@ -107,7 +107,8 @@ function initChatbot(config, backendUrl, clientId) {
   // === Widget panel principal ===
   const widget = document.createElement('div');
   Object.assign(widget.style, {
-    display: 'none', flexDirection: 'column', width: '350px', maxWidth: '90vw',
+    display: 'none', // PATCH: toujours caché au démarrage !
+    flexDirection: 'column', width: '350px', maxWidth: '90vw',
     background: `linear-gradient(to bottom, ${config.color}, #d7dcfa)`,
     color: '#000', borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
     padding: '20px', fontFamily: 'sans-serif', maxHeight: '90vh', overflow: 'hidden'
@@ -115,20 +116,22 @@ function initChatbot(config, backendUrl, clientId) {
   widget.classList.add('custom-chatbot-widget');
   shadow.appendChild(widget);
 
-  // --- AJOUT POUR LA RESPONSIVITÉ ULTRA MOBILE ---
+  // --- RESPONSIVITÉ : plus de centrage, juste à droite en bas ! ---
   function adaptMobile() {
     if (window.innerWidth < 500) {
-      widget.style.width = "100vw";
-      widget.style.maxWidth = "100vw";
-      widget.style.left = "0";
-      widget.style.right = "0";
-      widget.style.borderRadius = "0 0 22px 22px";
+      widget.style.width = "98vw";
+      widget.style.maxWidth = "98vw";
+      widget.style.left = "";
+      widget.style.right = "1vw";
+      widget.style.bottom = "2vw";
+      widget.style.borderRadius = "20px";
       widget.style.padding = "4vw 2vw 2vw 2vw";
-      container.style.left = "0";
-      container.style.right = "0";
-      container.style.width = "100vw";
-      container.style.bottom = "0";
+      container.style.left = "";
+      container.style.right = "1vw";
+      container.style.width = "";
+      container.style.bottom = "2vw";
       container.style.top = "";
+      widget.style.position = "fixed";
     } else {
       widget.style.width = "350px";
       widget.style.maxWidth = "90vw";
@@ -144,6 +147,10 @@ function initChatbot(config, backendUrl, clientId) {
   }
   adaptMobile();
   window.addEventListener('resize', adaptMobile);
+
+  // PATCH: le bouton launcher est TOUJOURS visible au démarrage !
+  launcher.style.display = 'inline-block';
+  widget.style.display = 'none';
 
   launcher.onclick = () => {
     launcher.style.display = 'none';
@@ -417,6 +424,9 @@ function initChatbot(config, backendUrl, clientId) {
     inputBox.style.display = 'none';
     vocalCtaBox.style.display = 'none';
     suggBox.style.display = '';
+    // PATCH : fermer le widget et réafficher le launcher quand on efface tout
+    widget.style.display = 'none';
+    launcher.style.display = 'inline-block';
   };
   rgpd.parentNode.insertBefore(clearHistory, rgpd.nextSibling);
 
@@ -590,6 +600,9 @@ function initChatbot(config, backendUrl, clientId) {
     inputBox.style.display = 'none';
     vocalCtaBox.style.display = 'none';
     suggBox.style.display = '';
+    // PATCH: widget fermé au démarrage !
+    widget.style.display = 'none';
+    launcher.style.display = 'inline-block';
   }
 
   updateModeUI();
@@ -600,17 +613,16 @@ function initChatbot(config, backendUrl, clientId) {
     @media (max-width: 500px) {
       .custom-chatbot-widget {
         width: 70vw !important;
-        max-width: 75vw !important;
+        max-width: 70vw !important;
         min-width: 0 !important;
-        left: 60% !important;
-        transform: translateX(-50%) !important;
-        right: unset !important;
+        left: unset !important;
+        right: 1vw !important;
         bottom: 2vw !important;
-        border-radius: 18px !important;
+        border-radius: 20px !important;
         box-shadow: 0 8px 32px #0002 !important;
         padding: 4vw 2vw 2vw 2vw !important;
         font-size: 1.06em !important;
-        max-height: 70vh !important;
+        max-height: 85vh !important;
         display: flex !important;
         flex-direction: column !important;
         position: fixed !important;
