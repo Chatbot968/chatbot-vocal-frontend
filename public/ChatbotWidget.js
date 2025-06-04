@@ -105,11 +105,11 @@ function initChatbot(config, backendUrl, clientId) {
   if (window.innerWidth < 500) {
     document.body.style.overflow = '';
     window.scrollTo(0, 0);
+    closeWidget();
   }
 }
 
-  // PATCH : Widget fermé au démarrage, même avec historique
-  window.addEventListener('DOMContentLoaded', closeWidget);
+
 
   const recognition = new window.SpeechRecognition();
   recognition.lang = 'fr-FR';
