@@ -9,8 +9,7 @@ window.CHATBOT_WIDGET_VERSION = 'v10 - ' + new Date().toISOString();
 console.log('🟢 [ChatbotWidget] Version chargée :', window.CHATBOT_WIDGET_VERSION);
 
 (function() {
-  // PATCH : on ne retire QUE les anciens containers chatbot (par id)
-  const allContainers = document.querySelectorAll('#chatbot-widget-container');
+  const allContainers = document.querySelectorAll('div[style*="z-index: 9999"]');
   allContainers.forEach(el => el.parentNode && el.parentNode.removeChild(el));
   const oldAlerts = document.querySelectorAll('#chatbot-global-alert');
   oldAlerts.forEach(el => el.parentNode && el.parentNode.removeChild(el));
@@ -77,7 +76,24 @@ function showAlert(msg) {
 }
 
 function initChatbot(config, backendUrl, clientId) {
-  // PATCH : ne JAMAIS recréer le container si déjà présent
+  // Toutes les variables (comme avant)
+  let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, isWidgetOpen = false;
+
+  // -- PATCH : always define closeWidget early --
+  function closeWidget() {
+    if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
+    if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
+    isWidgetOpen = false;
+    if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
+    if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
+    if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
+    if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = '';
+    if (window.innerWidth < 500) {
+      document.body.style.overflow = '';
+      window.scrollTo(0, 0);
+    }
+  }
+  // NE PAS TOUCHER AU CONTAINER !! Il doit rester dans le DOM
   let container = document.querySelector('#chatbot-widget-container');
   if (!container) {
     container = document.createElement('div');
@@ -88,26 +104,10 @@ function initChatbot(config, backendUrl, clientId) {
     container.style.zIndex = '9999';
     document.body.appendChild(container);
   } else {
-    container.style.display = '';
-    container.style.bottom = '20px';
-    container.style.right = '20px';
-    container.style.position = 'fixed';
-    container.style.zIndex = '9999';
-  }
-
-  // PATCH : ne jamais écraser le container ni réappendChild()
-  let shadow = container.shadowRoot;
-  if (!shadow) shadow = container.attachShadow({ mode: 'open' });
-  shadow.innerHTML = ''; // reset contenu mais PAS le container
-
-  // Toutes les variables
-  let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, isWidgetOpen = false;
-
-  // ========== PATCH MOBILE/FERMETURE OK ==========
-  function closeWidget() {
+    container.style.display = ''; // On remet visible au cas où
+    isWidgetOpen = false;
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
-    isWidgetOpen = false;
     if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
     if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
@@ -143,8 +143,15 @@ function initChatbot(config, backendUrl, clientId) {
     hasOpenedChat = !!JSON.parse(localStorage.getItem('chatbotHasOpened') || 'false');
   } catch (e) {}
 
-  // === SHADOW DOM ===
-  // (reprise : on réutilise le shadow DOM proprement, sans jamais casser le container !)
+  // ---- SHADOW DOM START ----
+  container = document.createElement('div');
+  container.style.position = 'fixed';
+  container.style.bottom = '20px';
+  container.style.right = '20px';
+  container.style.zIndex = '9999';
+  document.body.appendChild(container);
+
+  const shadow = container.attachShadow({ mode: 'open' });
 
   // === Launcher button (🤖) ===
   launcher = document.createElement('button');
@@ -167,45 +174,39 @@ function initChatbot(config, backendUrl, clientId) {
   widget.classList.add('custom-chatbot-widget');
   shadow.appendChild(widget);
 
-  // --- RESPONSIVITÉ PATCH ---
+  // --- RESPONSIVITÉ
   function adaptMobile() {
     if (window.innerWidth < 500) {
-      if (widget) {
-        widget.style.width = "98vw";
-        widget.style.maxWidth = "98vw";
-        widget.style.right = "1vw";
-        widget.style.bottom = "2vw";
-        widget.style.left = "";
-        widget.style.borderRadius = "20px";
-        widget.style.padding = "4vw 2vw 2vw 2vw";
-        widget.style.position = "fixed";
-      }
+      widget.style.width = "98vw";
+      widget.style.maxWidth = "98vw";
+      widget.style.left = "";
+      widget.style.right = "1vw";
+      widget.style.bottom = "2vw";
+      widget.style.borderRadius = "20px";
+      widget.style.padding = "4vw 2vw 2vw 2vw";
       container.style.left = "";
       container.style.right = "1vw";
+      container.style.width = "";
       container.style.bottom = "2vw";
       container.style.top = "";
-      container.style.width = "";
-      container.style.position = "fixed";
+      widget.style.position = "fixed";
     } else {
-      if (widget) {
-        widget.style.width = "350px";
-        widget.style.maxWidth = "90vw";
-        widget.style.borderRadius = "20px";
-        widget.style.left = "";
-        widget.style.right = "20px";
-        widget.style.position = "fixed";
-      }
+      widget.style.width = "350px";
+      widget.style.maxWidth = "90vw";
+      widget.style.borderRadius = "20px";
+      widget.style.left = "";
+      widget.style.right = "20px";
       container.style.left = "";
       container.style.right = "20px";
+      container.style.width = "";
       container.style.bottom = "20px";
       container.style.top = "";
-      container.style.width = "";
-      container.style.position = "fixed";
     }
   }
 
   // === OUVERTURE/FERMETURE PATCHÉE ===
   function openWidget() {
+    console.log('[DEBUG] openWidget appelée');
     if (typeof container !== "undefined" && container) container.style.display = '';
     if (typeof widget !== "undefined" && widget) widget.style.display = '';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'none';
@@ -262,6 +263,7 @@ function initChatbot(config, backendUrl, clientId) {
   header.appendChild(closeBtn);
   widget.appendChild(header);
 
+  // -- Welcome, suggestions, chatLog, inputBox, vocal, footerNav, etc. --
   function getWelcomeMsg() {
     const h = new Date().getHours();
     if (h < 6) return "🌙 Bonsoir !<br><strong>Que puis-je faire pour vous ?</strong>";
@@ -635,6 +637,7 @@ function initChatbot(config, backendUrl, clientId) {
     })
       .then(r => r.json())
       .then(data => {
+        console.log('[DEBUG FRONT] Reçu du backend:', data);
         hideLoader();
         appendMessage(data.text || '(Pas de réponse)', 'bot', true);
         chatHistory.push({ msg: data.text || '(Pas de réponse)', sender: 'bot', isHTML: true });
@@ -650,7 +653,7 @@ function initChatbot(config, backendUrl, clientId) {
           }
         }
       })
-      .catch(() => {
+      .catch((err) => {
         hideLoader();
         appendMessage("Désolé, le serveur est injoignable.", 'bot');
         chatHistory.push({ msg: "Désolé, le serveur est injoignable.", sender: 'bot', isHTML: false });
@@ -672,9 +675,10 @@ function initChatbot(config, backendUrl, clientId) {
   });
   widget.addEventListener('touchend', () => { touchStartY = null; });
 
-  // PATCH : widget TOUJOURS fermé au démarrage, adaptMobile dès le boot
+  // PATCH DIEGO : widget TOUJOURS fermé au démarrage, même si historique
   closeWidget();
-  adaptMobile();
+  adaptMobile(); // pour forcer le style dès le boot
+
   updateModeUI();
 
   // === CSS ULTRA RESPONSIVE ===
@@ -682,8 +686,8 @@ function initChatbot(config, backendUrl, clientId) {
   style.textContent = `
     @media (max-width: 500px) {
       .custom-chatbot-widget {
-        width: 98vw !important;
-        max-width: 98vw !important;
+        width: 70vw !important;
+        max-width: 70vw !important;
         min-width: 0 !important;
         left: unset !important;
         right: 1vw !important;
