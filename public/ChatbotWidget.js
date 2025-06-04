@@ -198,27 +198,28 @@ function initChatbot(config, backendUrl, clientId) {
   }
 
   // === OUVERTURE/FERMETURE PATCHÉE ===
-  function openWidget() {
+ function openWidget() {
   console.log('[DEBUG] openWidget appelée');
-  if (container) container.style.display = ''; // Ré-affiche le container
+  if (typeof container !== "undefined" && container) container.style.display = '';
   isWidgetOpen = true;
   adaptMobile();
   setTimeout(() => {
-    if (isTextMode) input.focus();
+    if (isTextMode && typeof input !== "undefined" && input && input.focus) input.focus();
   }, 300);
-    if (hasOpenedChat) {
-      chatLog.style.display = '';
-      inputBox.style.display = isTextMode ? 'flex' : 'none';
-      vocalCtaBox.style.display = isTextMode ? 'none' : 'flex';
-      suggBox.style.display = 'none';
-      renderHistory();
-    } else {
-      chatLog.style.display = 'none';
-      inputBox.style.display = 'none';
-      vocalCtaBox.style.display = 'none';
-      suggBox.style.display = '';
-    }
+
+  if (hasOpenedChat) {
+    if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = '';
+    if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = isTextMode ? 'flex' : 'none';
+    if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = isTextMode ? 'none' : 'flex';
+    if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = 'none';
+    if (typeof renderHistory === "function") renderHistory();
+  } else {
+    if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
+    if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
+    if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
+    if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = '';
   }
+}
   launcher.onclick = openWidget;
 
   // Ferme le widget au resize/orientationchange si ouvert (et réadapte)
@@ -432,22 +433,24 @@ function initChatbot(config, backendUrl, clientId) {
     vocalTab.style.color = '#000';
     updateModeUI();
   };
-  function updateModeUI() {
-    if (!hasOpenedChat) {
-      inputBox.style.display = 'none';
-      vocalCtaBox.style.display = 'none';
-      return;
-    }
-    if (isTextMode) {
-      inputBox.style.display = 'flex';
-      sendBtn.style.display = 'inline-block';
-      vocalCtaBox.style.display = 'none';
-      setTimeout(() => input.focus(), 100);
-    } else {
-      inputBox.style.display = 'none';
-      vocalCtaBox.style.display = 'flex';
-    }
+ function updateModeUI() {
+  if (!hasOpenedChat) {
+    inputBox.style.display = 'none';
+    vocalCtaBox.style.display = 'none';
+    return;
   }
+  if (isTextMode) {
+    inputBox.style.display = 'flex';
+    sendBtn.style.display = 'inline-block';
+    vocalCtaBox.style.display = 'none';
+    setTimeout(() => {
+      if (isTextMode && typeof input !== "undefined" && input && input.focus) input.focus();
+    }, 100);
+  } else {
+    inputBox.style.display = 'none';
+    vocalCtaBox.style.display = 'flex';
+  }
+}
   footerNav.appendChild(vocalTab);
   footerNav.appendChild(textTab);
   widget.appendChild(footerNav);
