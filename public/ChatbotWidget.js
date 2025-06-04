@@ -82,20 +82,19 @@ function initChatbot(config, backendUrl, clientId) {
   function closeWidget() {
   console.log('[DEBUG] closeWidget appelée');
   if (!widget || !launcher) return;
-  // 1. Masquer le widget (le panel principal dans le shadow DOM)
+  // 1. Masquer TOUT le widget (panel dans le shadow DOM)
   widget.style.display = 'none';
-  // 2. Afficher le launcher (bouton 🤖)
+  // Masque le container principal du widget (qui est en fixed en bas à droite)
+if (container) container.style.display = 'none';
+  // 2. Réafficher le bouton launcher (🤖)
   launcher.style.display = 'inline-block';
   isWidgetOpen = false;
-  // 3. Reset styles parasites
-  widget.style.maxHeight = '';
-  widget.style.minHeight = '';
-  widget.style.position = '';
+  // 3. En bonus, tu peux masquer tous les éléments internes si tu veux reset les états (optionnel)
   if (chatLog) chatLog.style.display = 'none';
   if (inputBox) inputBox.style.display = 'none';
   if (vocalCtaBox) vocalCtaBox.style.display = 'none';
   if (suggBox) suggBox.style.display = '';
-  // 4. Patch mobile : reset scroll/overflow
+  // 4. Mobile patch : reset overflow
   if (window.innerWidth < 500) {
     document.body.style.overflow = '';
     window.scrollTo(0, 0);
@@ -193,16 +192,16 @@ function initChatbot(config, backendUrl, clientId) {
 
   // === OUVERTURE/FERMETURE PATCHÉE ===
   function openWidget() {
-    // PATCH : Affichage debug
-    console.log('[DEBUG] openWidget appelée');
-    container.style.display = 'block'; // PATCH : On ré-affiche tout le container !
-    widget.style.display = 'flex';
-    launcher.style.display = 'none';
-    isWidgetOpen = true;
-    adaptMobile();
-    setTimeout(() => {
-      if (isTextMode) input.focus();
-    }, 300);
+  console.log('[DEBUG] openWidget appelée');
+  // 1. Ré-affiche le container principal
+  if (container) container.style.display = '';
+  if (widget) widget.style.display = 'flex';
+  if (launcher) launcher.style.display = 'none';
+  isWidgetOpen = true;
+  adaptMobile();
+  setTimeout(() => {
+    if (isTextMode) input.focus();
+  }, 300);
     if (hasOpenedChat) {
       chatLog.style.display = '';
       inputBox.style.display = isTextMode ? 'flex' : 'none';
