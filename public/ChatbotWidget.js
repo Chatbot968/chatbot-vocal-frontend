@@ -16,7 +16,7 @@ async function loadAndInitChatbot() {
   const backendUrl = scriptTag?.getAttribute('data-backend-url') || "https://chatbot-vocal-backend.onrender.com";
   let config = {
     color: "#0078d4",
-    logo: null, // fix: nom du champ
+    logo: null,
     suggestions: [
       "Je souhaite prendre rendez-vous",
       "Quels sont vos services ?",
@@ -28,8 +28,7 @@ async function loadAndInitChatbot() {
     const res = await fetch(`${backendUrl}/config/${clientId}.json`);
     if (res.ok) {
       const cfg = await res.json();
-      config = { ...config, ...cfg }; // merge pour fallback auto sur les clés manquantes
-      // Correction automatique du champ logo/logoUrl
+      config = { ...config, ...cfg };
       if (cfg.logo && !cfg.logoUrl) config.logoUrl = cfg.logo;
       if (!cfg.logo && cfg.logoUrl) config.logo = cfg.logoUrl;
     } else {
@@ -42,7 +41,6 @@ async function loadAndInitChatbot() {
 }
 
 function showAlert(msg) {
-  // Simple UI pour prévenir l'utilisateur en cas de gros bug backend/config
   let exist = document.querySelector('#chatbot-global-alert');
   if (exist) exist.remove();
   const div = document.createElement('div');
@@ -76,7 +74,28 @@ function initChatbot(config, backendUrl, clientId) {
   let isTextMode = true;
   let isListening = false;
   let currentAudio = null;
-  let hasStarted = false; // Ajouté : état pour suivre l'ouverture réelle de la discussion
+
+  // === HISTORIQUE DE DISCUSSION ===
+  const CHAT_HISTORY_KEY = "chatbotHistory_" + clientId;
+  function loadHistory() {
+    try {
+      const hist = localStorage.getItem(CHAT_HISTORY_KEY);
+      return hist ? JSON.parse(hist) : [];
+    } catch {
+      return [];
+    }
+  }
+  function saveHistory(history) {
+    try {
+      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(history));
+    } catch {}
+  }
+  function clearHistory() {
+    try {
+      localStorage.removeItem(CHAT_HISTORY_KEY);
+    } catch {}
+  }
+  let chatHistory = loadHistory();
 
   // ---- SHADOW DOM START ----
   const container = document.createElement('div');
@@ -113,6 +132,7 @@ function initChatbot(config, backendUrl, clientId) {
     widget.style.display = 'flex';
     setTimeout(() => {
       if (isTextMode) input.focus();
+      renderHistory(); // ⬅️ À chaque ouverture, on affiche l’historique
     }, 300);
   };
 
@@ -125,7 +145,7 @@ function initChatbot(config, backendUrl, clientId) {
   logo.src = config.logoUrl || config.logo || '';
   logo.alt = 'Logo';
   logo.style.height = '30px';
-  logo.onerror = () => { logo.style.display = "none"; }; // si image cassée
+  logo.onerror = () => { logo.style.display = "none"; };
   header.appendChild(logo);
 
   const closeBtn = document.createElement('button');
@@ -183,7 +203,6 @@ function initChatbot(config, backendUrl, clientId) {
   chatLog.style.borderRadius = '10px';
   chatLog.style.position = 'relative';
   chatLog.style.transition = 'max-height 0.25s cubic-bezier(0.4,0.3,0.6,1)';
-  chatLog.style.display = 'none'; // 👈 Ajout : MASQUER par défaut au lancement
 
   // === Bouton expand/reduce ===
   const expandBtn = document.createElement('button');
@@ -343,15 +362,38 @@ function initChatbot(config, backendUrl, clientId) {
   footerNav.appendChild(textTab);
   widget.appendChild(footerNav);
 
-  // RGPD
+  // RGPD + Effacer l'historique
+  const rgpdBox = document.createElement('div');
+  rgpdBox.style.display = 'flex';
+  rgpdBox.style.justifyContent = 'space-between';
+  rgpdBox.style.alignItems = 'center';
+  rgpdBox.style.fontSize = '11px';
+  rgpdBox.style.marginTop = '6px';
+
   const rgpd = document.createElement('a');
   rgpd.href = config.rgpdLink;
   rgpd.textContent = 'Politique de confidentialité';
   rgpd.target = '_blank';
   Object.assign(rgpd.style, {
-    fontSize: '11px', color: '#eee', marginTop: '6px', textAlign: 'right'
+    color: '#eee', textAlign: 'right'
   });
-  widget.appendChild(rgpd);
+
+  // Nouveau lien "Effacer l'historique"
+  const clearLink = document.createElement('a');
+  clearLink.href = '#';
+  clearLink.textContent = 'Effacer l\'historique';
+  clearLink.style.color = '#eee';
+  clearLink.style.textDecoration = 'underline';
+  clearLink.onclick = (e) => {
+    e.preventDefault();
+    clearHistory();
+    chatHistory = [];
+    renderHistory();
+  };
+
+  rgpdBox.appendChild(rgpd);
+  rgpdBox.appendChild(clearLink);
+  widget.appendChild(rgpdBox);
 
   // --- Gestion vocale (bouton CTA noir + anim) ---
   recognition.onstart = () => {
@@ -380,7 +422,6 @@ function initChatbot(config, backendUrl, clientId) {
     }
   };
 
-  // Accessibilité
   document.addEventListener('keydown', (e) => {
     if (e.key === "Escape" && widget.style.display !== 'none') {
       widget.style.display = 'none';
@@ -392,7 +433,6 @@ function initChatbot(config, backendUrl, clientId) {
     }
   });
 
-  // Ajout loader à ce niveau
   let loader = null;
   function showLoader() {
     if (!loader) {
@@ -416,13 +456,7 @@ function initChatbot(config, backendUrl, clientId) {
   }
 
   // -- Ajout avatar bot, anim fadeIn, gestion audio --
-  function appendMessage(msg, sender, isHTML = false) {
-    if (!hasStarted) {
-      chatLog.style.display = 'block'; // 👈 On montre la zone de chat au premier message
-      suggBox.style.display = 'none';  // 👈 On masque les suggestions
-      hasStarted = true;
-    }
-
+  function appendMessage(msg, sender, isHTML = false, silent = false) {
     const msgRow = document.createElement('div');
     msgRow.style.display = 'flex';
     msgRow.style.alignItems = 'flex-end';
@@ -430,12 +464,11 @@ function initChatbot(config, backendUrl, clientId) {
     msgRow.style.opacity = '0';
     msgRow.style.transition = 'opacity 0.28s';
 
-    setTimeout(() => { msgRow.style.opacity = 1; }, 50); // Anim fadeIn
+    setTimeout(() => { msgRow.style.opacity = 1; }, 50);
 
     if (sender === 'bot') {
-      // Avatar bot à gauche
       const avatar = document.createElement('span');
-      avatar.textContent = '🤖'; // Peut remplacer par un img plus tard si besoin
+      avatar.textContent = '🤖';
       avatar.style.fontSize = "22px";
       avatar.style.marginRight = "8px";
       msgRow.appendChild(avatar);
@@ -463,6 +496,26 @@ function initChatbot(config, backendUrl, clientId) {
     msgRow.appendChild(div);
     chatLog.appendChild(msgRow);
     chatLog.scrollTop = chatLog.scrollHeight;
+
+    // === Ajoute à l'historique (sauf lors du renderHistory)
+    if (!silent) {
+      chatHistory.push({ msg, sender, isHTML });
+      saveHistory(chatHistory);
+    }
+  }
+
+  // === Affiche tout l'historique (et efface les anciens messages à l'affichage)
+  function renderHistory() {
+    chatLog.innerHTML = "";
+    // Les boutons expand/reduce doivent rester
+    chatLog.appendChild(expandBtn);
+    chatLog.appendChild(reduceBtn);
+
+    if (chatHistory.length > 0) {
+      chatHistory.forEach(item => {
+        appendMessage(item.msg, item.sender, item.isHTML, true /*silent: pas de double save*/);
+      });
+    }
   }
 
   // ===== LOGIQUE D'ENVOI DE MESSAGE =====
@@ -470,7 +523,6 @@ function initChatbot(config, backendUrl, clientId) {
     suggBox.style.display = 'none';
     appendMessage(msg, 'user');
     showLoader();
-    // Si audio en cours, coupe
     if (currentAudio && !currentAudio.paused) {
       currentAudio.pause();
       currentAudio.currentTime = 0;
@@ -483,11 +535,9 @@ function initChatbot(config, backendUrl, clientId) {
     })
       .then(r => r.json())
       .then(data => {
-        // AJOUT DEBUG NON INTRUSIF ICI
         console.log('[DEBUG FRONT] Reçu du backend:', data);
         hideLoader();
         appendMessage(data.text || '(Pas de réponse)', 'bot', true);
-        // Audio seulement en mode vocal
         if (!isTextMode) {
           if (data.audioUrl) {
             currentAudio = new Audio(data.audioUrl);
@@ -506,7 +556,6 @@ function initChatbot(config, backendUrl, clientId) {
 
   updateModeUI();
 
-  // Place bien les STYLES DANS le SHADOW DOM !
   const style = document.createElement('style');
   style.textContent = `
     @media (max-width: 480px) {
