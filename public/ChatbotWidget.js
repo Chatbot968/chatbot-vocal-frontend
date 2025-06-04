@@ -1,9 +1,13 @@
 // =========== PATCH ANTI-BUG ET VERSIONNING CHATBOTWIDGET ===========
 
-// Affiche la version du widget dans la console (change "v7" à chaque update majeure)
-const CHATBOT_WIDGET_VERSION = 'v7 - ' + new Date().toISOString();
-console.log('🟢 [ChatbotWidget] Version chargée :', CHATBOT_WIDGET_VERSION);
-
+if (!window.CHATBOT_WIDGET_VERSION) {
+  window.CHATBOT_WIDGET_VERSION = 'v7 - ' + new Date().toISOString();
+  console.log('🟢 [ChatbotWidget] Version chargée :', window.CHATBOT_WIDGET_VERSION);
+} else {
+  console.warn('ChatbotWidget déjà chargé, version :', window.CHATBOT_WIDGET_VERSION);
+  // On arrête le script pour éviter tout bug
+  throw new Error('ChatbotWidget déjà injecté.');
+}
 // Supprime toutes les anciennes instances du widget et alertes résiduelles (anti-double-injection)
 (function() {
   // Sélectionne et supprime tout widget précédent selon ta structure
