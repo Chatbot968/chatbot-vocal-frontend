@@ -1,3 +1,19 @@
+// =========== PATCH ANTI-BUG ET VERSIONNING CHATBOTWIDGET ===========
+
+// Affiche la version du widget dans la console (change "v7" à chaque update majeure)
+const CHATBOT_WIDGET_VERSION = 'v7 - ' + new Date().toISOString();
+console.log('🟢 [ChatbotWidget] Version chargée :', CHATBOT_WIDGET_VERSION);
+
+// Supprime toutes les anciennes instances du widget et alertes résiduelles (anti-double-injection)
+(function() {
+  // Sélectionne et supprime tout widget précédent selon ta structure
+  const allContainers = document.querySelectorAll('div[style*="z-index: 9999"]');
+  allContainers.forEach(el => el.parentNode && el.parentNode.removeChild(el));
+  // Supprime les anciennes alertes globales éventuelles
+  const oldAlerts = document.querySelectorAll('#chatbot-global-alert');
+  oldAlerts.forEach(el => el.parentNode && el.parentNode.removeChild(el));
+})();
+
 // === Chatbot vocal responsive avec visuel vocal CTA, avatars, anim, suggestions, etc. ===
 declareSpeechRecognition();
 
