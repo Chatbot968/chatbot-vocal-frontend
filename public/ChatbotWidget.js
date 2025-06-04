@@ -604,7 +604,7 @@ function initChatbot(config, backendUrl, clientId) {
         min-width: 0 !important;
         left: 50% !important;
         transform: translateX(-50%) !important;
-        right: unset !important;
+        right: 5% !important;
         bottom: 2vw !important;
         border-radius: 18px !important;
         box-shadow: 0 8px 32px #0002 !important;
