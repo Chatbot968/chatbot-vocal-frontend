@@ -77,34 +77,20 @@ function showAlert(msg) {
 
 function initChatbot(config, backendUrl, clientId) {
   // ========== FONCTION CLOSE WIDGET (DÉCLARÉE EN PREMIER POUR SÉCURITÉ GLOBALE) ==========
-  let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, isWidgetOpen = false;
+  let container, widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, isWidgetOpen = false;
+  
   function closeWidget() {
-  console.log('[DEBUG] closeWidget appelée');
-  if (!widget || !launcher) return;
-  // 1. Masquer le widget dans le shadow DOM (panel)
-  widget.style.display = 'none';
-  // 2. Afficher le launcher (bouton 🤖)
-  launcher.style.display = 'inline-block';
-  isWidgetOpen = false;
-  // 3. Réinitialise les éléments internes
-  widget.style.maxHeight = '';
-  widget.style.minHeight = '';
-  widget.style.position = '';
-  if (chatLog) chatLog.style.display = 'none';
-  if (inputBox) inputBox.style.display = 'none';
-  if (vocalCtaBox) vocalCtaBox.style.display = 'none';
-  if (suggBox) suggBox.style.display = '';
+    console.log('[DEBUG] closeWidget appelée');
+    if (!container) return; // PATCH : On vérifie que container existe
+    container.style.display = 'none'; // On masque TOUT le widget
+    isWidgetOpen = false;
 
-  // 4. PATCH “BULLDOZER” mobile : force la fermeture sur tous les navigateurs mobiles récalcitrants
-  // Si tu veux VRAIMENT tout virer du DOM : dé-commente la ligne suivante :
-  // if (container && container.parentNode) container.parentNode.removeChild(container);
-
-  // 5. PATCH : Scrolling mobile, bug d’ancrage
-  if (window.innerWidth < 500) {
-    document.body.style.overflow = '';
-    window.scrollTo(0, 0);
+    // PATCH : Scrolling mobile, bug d’ancrage
+    if (window.innerWidth < 500) {
+      document.body.style.overflow = '';
+      window.scrollTo(0, 0);
+    }
   }
-}
 
   // PATCH : Widget fermé au démarrage, même avec historique
   window.addEventListener('DOMContentLoaded', closeWidget);
@@ -135,7 +121,7 @@ function initChatbot(config, backendUrl, clientId) {
   } catch (e) {}
 
   // ---- SHADOW DOM START ----
-  const container = document.createElement('div');
+  container = document.createElement('div');
   container.style.position = 'fixed';
   container.style.bottom = '20px';
   container.style.right = '20px';
@@ -199,6 +185,7 @@ function initChatbot(config, backendUrl, clientId) {
   function openWidget() {
     // PATCH : Affichage debug
     console.log('[DEBUG] openWidget appelée');
+    container.style.display = 'block'; // PATCH : On ré-affiche tout le container !
     widget.style.display = 'flex';
     launcher.style.display = 'none';
     isWidgetOpen = true;
@@ -225,8 +212,6 @@ function initChatbot(config, backendUrl, clientId) {
   window.addEventListener('resize', () => {
     adaptMobile();
     if (window.innerWidth < 500 && isWidgetOpen) {
-      // Optionnel : tu peux choisir de fermer sur resize mobile, ou non.
-      // closeWidget();
       widget.scrollTop = 0;
       widget.style.top = '';
       widget.style.bottom = window.innerHeight > 200 ? "2vw" : "0";
