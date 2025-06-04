@@ -79,6 +79,8 @@ function initChatbot(config, backendUrl, clientId) {
   // ========== FONCTION CLOSE WIDGET (DÉCLARÉE EN PREMIER POUR SÉCURITÉ GLOBALE) ==========
   let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, isWidgetOpen = false;
   function closeWidget() {
+    // PATCH : Affichage debug
+    console.log('[DEBUG] closeWidget appelée');
     if (!widget || !launcher) return;
     widget.style.display = 'none';
     launcher.style.display = 'inline-block';
@@ -93,7 +95,7 @@ function initChatbot(config, backendUrl, clientId) {
     if (suggBox) suggBox.style.display = '';
   }
 
-  // Ferme le widget au démarrage (même avec historique)
+  // PATCH : Widget fermé au démarrage, même avec historique
   window.addEventListener('DOMContentLoaded', closeWidget);
 
   const recognition = new window.SpeechRecognition();
@@ -184,11 +186,12 @@ function initChatbot(config, backendUrl, clientId) {
 
   // === OUVERTURE/FERMETURE PATCHÉE ===
   function openWidget() {
-    // Toujours forcer un état propre
+    // PATCH : Affichage debug
+    console.log('[DEBUG] openWidget appelée');
     widget.style.display = 'flex';
     launcher.style.display = 'none';
     isWidgetOpen = true;
-    adaptMobile(); // Toujours réappliquer le responsive à l'ouverture
+    adaptMobile();
     setTimeout(() => {
       if (isTextMode) input.focus();
     }, 300);
