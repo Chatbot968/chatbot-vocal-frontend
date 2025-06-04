@@ -1,26 +1,20 @@
-/// =========== PATCH ANTI-DOUBLE-INJECTION & VERSIONNING CHATBOTWIDGET ===========
-
-// Si déjà chargé, on n’exécute plus rien
+// =========== PATCH ANTI-DOUBLE-INJECTION & VERSIONNING CHATBOTWIDGET ===========
 if (window.__CHATBOT_WIDGET_LOADED__) {
   console.warn('[ChatbotWidget] Script déjà injecté, on stoppe pour éviter bug ou duplication.');
   throw new Error('ChatbotWidget déjà injecté');
 }
 window.__CHATBOT_WIDGET_LOADED__ = true;
 
-// Affiche la version dans la console pour vérif à distance
-window.CHATBOT_WIDGET_VERSION = 'v8 - ' + new Date().toISOString();
+window.CHATBOT_WIDGET_VERSION = 'v10 - ' + new Date().toISOString();
 console.log('🟢 [ChatbotWidget] Version chargée :', window.CHATBOT_WIDGET_VERSION);
 
-// Nettoyage de toutes anciennes instances du widget (shadow DOM inclus, pour être sûr)
 (function() {
   const allContainers = document.querySelectorAll('div[style*="z-index: 9999"]');
   allContainers.forEach(el => el.parentNode && el.parentNode.removeChild(el));
-  // Supprime les alertes globales éventuelles
   const oldAlerts = document.querySelectorAll('#chatbot-global-alert');
   oldAlerts.forEach(el => el.parentNode && el.parentNode.removeChild(el));
 })();
 
-// === Chatbot vocal responsive avec visuel vocal CTA, avatars, anim, suggestions, etc. ===
 declareSpeechRecognition();
 
 function declareSpeechRecognition() {
@@ -96,6 +90,7 @@ function initChatbot(config, backendUrl, clientId) {
   let isTextMode = true;
   let isListening = false;
   let currentAudio = null;
+  let isWidgetOpen = false;
 
   // --- GESTION DE L'HISTORIQUE & DE L'OUVERTURE CHAT ---
   let chatHistory = [];
@@ -129,7 +124,7 @@ function initChatbot(config, backendUrl, clientId) {
   // === Widget panel principal ===
   const widget = document.createElement('div');
   Object.assign(widget.style, {
-    display: 'none', // === PATCH DIEGO : toujours caché au démarrage
+    display: 'none',
     flexDirection: 'column', width: '350px', maxWidth: '90vw',
     background: `linear-gradient(to bottom, ${config.color}, #d7dcfa)`,
     color: '#000', borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
@@ -138,7 +133,7 @@ function initChatbot(config, backendUrl, clientId) {
   widget.classList.add('custom-chatbot-widget');
   shadow.appendChild(widget);
 
-  // --- RESPONSIVITÉ : plus de centrage, juste à droite en bas ! ---
+  // --- RESPONSIVITÉ
   function adaptMobile() {
     if (window.innerWidth < 500) {
       widget.style.width = "98vw";
@@ -170,17 +165,14 @@ function initChatbot(config, backendUrl, clientId) {
   adaptMobile();
   window.addEventListener('resize', adaptMobile);
 
-  // === PATCH DIEGO : Etat initial forcé ! ===
-  launcher.style.display = 'inline-block';
-  widget.style.display = 'none';
-
-  launcher.onclick = () => {
+  // === OUVERTURE/FERMETURE PATCHÉE ===
+  function openWidget() {
     launcher.style.display = 'none';
     widget.style.display = 'flex';
+    isWidgetOpen = true;
     setTimeout(() => {
       if (isTextMode) input.focus();
     }, 300);
-
     if (hasOpenedChat) {
       chatLog.style.display = '';
       inputBox.style.display = isTextMode ? 'flex' : 'none';
@@ -193,8 +185,15 @@ function initChatbot(config, backendUrl, clientId) {
       vocalCtaBox.style.display = 'none';
       suggBox.style.display = '';
     }
-  };
+  }
+  function closeWidget() {
+    widget.style.display = 'none';
+    launcher.style.display = 'inline-block';
+    isWidgetOpen = false;
+  }
+  launcher.onclick = openWidget;
 
+  // ========== UI DU CHATBOT (header, etc...) ==========
   const header = document.createElement('div');
   header.style.display = 'flex';
   header.style.justifyContent = 'space-between';
@@ -212,13 +211,11 @@ function initChatbot(config, backendUrl, clientId) {
   Object.assign(closeBtn.style, {
     border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer'
   });
-  closeBtn.onclick = () => {
-    widget.style.display = 'none';
-    launcher.style.display = 'inline-block';
-  };
+  closeBtn.onclick = closeWidget;
   header.appendChild(closeBtn);
   widget.appendChild(header);
 
+  // -- Welcome, suggestions, chatLog, inputBox, vocal, footerNav, etc. --
   function getWelcomeMsg() {
     const h = new Date().getHours();
     if (h < 6) return "🌙 Bonsoir !<br><strong>Que puis-je faire pour vous ?</strong>";
@@ -226,7 +223,6 @@ function initChatbot(config, backendUrl, clientId) {
     if (h < 18) return "👋 Bonjour !<br><strong>Que puis-je faire pour vous ?</strong>";
     return "🌙 Bonsoir !<br><strong>Que puis-je faire pour vous ?</strong>";
   }
-
   const title = document.createElement('h2');
   title.innerHTML = getWelcomeMsg();
   title.style.margin = '16px 0';
@@ -434,7 +430,6 @@ function initChatbot(config, backendUrl, clientId) {
   clearHistory.style.marginLeft = "16px";
   clearHistory.style.color = "#bbb";
   clearHistory.style.textDecoration = "underline";
-  // --- PATCH : EFFACER L'HISTORIQUE + RESET SUGGESTIONS ---
   clearHistory.onclick = (e) => {
     e.preventDefault();
     chatHistory = [];
@@ -446,9 +441,7 @@ function initChatbot(config, backendUrl, clientId) {
     inputBox.style.display = 'none';
     vocalCtaBox.style.display = 'none';
     suggBox.style.display = '';
-    // PATCH : fermer le widget et réafficher le launcher quand on efface tout
-    widget.style.display = 'none';
-    launcher.style.display = 'inline-block';
+    closeWidget();
   };
   rgpd.parentNode.insertBefore(clearHistory, rgpd.nextSibling);
 
@@ -479,9 +472,8 @@ function initChatbot(config, backendUrl, clientId) {
   };
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === "Escape" && widget.style.display !== 'none') {
-      widget.style.display = 'none';
-      launcher.style.display = 'inline-block';
+    if (e.key === "Escape" && isWidgetOpen) {
+      closeWidget();
     }
     if (e.key === "Enter" && isTextMode && document.activeElement === input && input.value.trim()) {
       handleMessage(input.value);
@@ -612,8 +604,7 @@ function initChatbot(config, backendUrl, clientId) {
   }
 
   // === PATCH DIEGO : widget TOUJOURS fermé au démarrage, même si historique ===
-  widget.style.display = 'none';
-  launcher.style.display = 'inline-block';
+  closeWidget();
 
   updateModeUI();
 
@@ -675,11 +666,6 @@ function initChatbot(config, backendUrl, clientId) {
     button:focus { outline: 2px solid #009fff77 !important; }
     .msg-fadein { animation: fadeInUp 0.4s; }
     @keyframes fadeInUp { from { opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
-  @media (max-width: 500px) {
-  .custom-chatbot-widget.closed {
-    display: none !important;
-  }
-}`;
-  
+  `;
   shadow.appendChild(style);
 }
