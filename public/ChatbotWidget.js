@@ -76,8 +76,23 @@ function showAlert(msg) {
 }
 
 function initChatbot(config, backendUrl, clientId) {
-  // --- CRÉATION DU CONTAINER ---
+  // Toutes les variables (comme avant)
   let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, isWidgetOpen = false;
+
+   // -- PATCH : always define closeWidget early --
+  function closeWidget() {
+    if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
+    if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
+    isWidgetOpen = false;
+    if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
+    if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
+    if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
+    if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = '';
+    if (window.innerWidth < 500) {
+      document.body.style.overflow = '';
+      window.scrollTo(0, 0);
+    }
+  }
   // NE PAS TOUCHER AU CONTAINER !! Il doit rester dans le DOM
   let container = document.querySelector('#chatbot-widget-container');
   if (!container) {
@@ -587,9 +602,10 @@ function initChatbot(config, backendUrl, clientId) {
   }
 
   function renderHistory() {
-    chatLog.innerHTML = '';
-    chatHistory.forEach(item => appendMessage(item.msg, item.sender, item.isHTML));
-  }
+  if (!chatLog) return; // PATCH sécurité !
+  chatLog.innerHTML = '';
+  chatHistory.forEach(item => appendMessage(item.msg, item.sender, item.isHTML));
+}
 
   function handleMessage(msg) {
     if (!hasOpenedChat) {
