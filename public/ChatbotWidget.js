@@ -76,6 +76,7 @@ function initChatbot(config, backendUrl, clientId) {
   let isTextMode = true;
   let isListening = false;
   let currentAudio = null;
+  let hasStarted = false; // Ajouté : état pour suivre l'ouverture réelle de la discussion
 
   // ---- SHADOW DOM START ----
   const container = document.createElement('div');
@@ -182,6 +183,7 @@ function initChatbot(config, backendUrl, clientId) {
   chatLog.style.borderRadius = '10px';
   chatLog.style.position = 'relative';
   chatLog.style.transition = 'max-height 0.25s cubic-bezier(0.4,0.3,0.6,1)';
+  chatLog.style.display = 'none'; // 👈 Ajout : MASQUER par défaut au lancement
 
   // === Bouton expand/reduce ===
   const expandBtn = document.createElement('button');
@@ -415,6 +417,12 @@ function initChatbot(config, backendUrl, clientId) {
 
   // -- Ajout avatar bot, anim fadeIn, gestion audio --
   function appendMessage(msg, sender, isHTML = false) {
+    if (!hasStarted) {
+      chatLog.style.display = 'block'; // 👈 On montre la zone de chat au premier message
+      suggBox.style.display = 'none';  // 👈 On masque les suggestions
+      hasStarted = true;
+    }
+
     const msgRow = document.createElement('div');
     msgRow.style.display = 'flex';
     msgRow.style.alignItems = 'flex-end';
