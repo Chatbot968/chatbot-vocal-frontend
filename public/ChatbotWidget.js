@@ -16,7 +16,7 @@ async function loadAndInitChatbot() {
   const backendUrl = scriptTag?.getAttribute('data-backend-url') || "https://chatbot-vocal-backend.onrender.com";
   let config = {
     color: "#0078d4",
-    logo: null,
+    logo: null, // fix: nom du champ
     suggestions: [
       "Je souhaite prendre rendez-vous",
       "Quels sont vos services ?",
@@ -28,7 +28,8 @@ async function loadAndInitChatbot() {
     const res = await fetch(`${backendUrl}/config/${clientId}.json`);
     if (res.ok) {
       const cfg = await res.json();
-      config = { ...config, ...cfg };
+      config = { ...config, ...cfg }; // merge pour fallback auto sur les clés manquantes
+      // Correction automatique du champ logo/logoUrl
       if (cfg.logo && !cfg.logoUrl) config.logoUrl = cfg.logo;
       if (!cfg.logo && cfg.logoUrl) config.logo = cfg.logoUrl;
     } else {
@@ -75,27 +76,16 @@ function initChatbot(config, backendUrl, clientId) {
   let isListening = false;
   let currentAudio = null;
 
-  // === HISTORIQUE DE DISCUSSION ===
-  const CHAT_HISTORY_KEY = "chatbotHistory_" + clientId;
-  function loadHistory() {
-    try {
-      const hist = localStorage.getItem(CHAT_HISTORY_KEY);
-      return hist ? JSON.parse(hist) : [];
-    } catch {
-      return [];
-    }
-  }
-  function saveHistory(history) {
-    try {
-      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(history));
-    } catch {}
-  }
-  function clearHistory() {
-    try {
-      localStorage.removeItem(CHAT_HISTORY_KEY);
-    } catch {}
-  }
-  let chatHistory = loadHistory();
+  // --- GESTION DE L'HISTORIQUE & DE L'OUVERTURE CHAT ---
+  // On garde l'historique du chat (array d'objets {msg, sender, isHTML})
+  let chatHistory = [];
+  try {
+    chatHistory = JSON.parse(localStorage.getItem('chatbotChatHistory') || '[]');
+  } catch (e) {}
+  let hasOpenedChat = false;
+  try {
+    hasOpenedChat = !!JSON.parse(localStorage.getItem('chatbotHasOpened') || 'false');
+  } catch (e) {}
 
   // ---- SHADOW DOM START ----
   const container = document.createElement('div');
@@ -132,8 +122,22 @@ function initChatbot(config, backendUrl, clientId) {
     widget.style.display = 'flex';
     setTimeout(() => {
       if (isTextMode) input.focus();
-      renderHistory(); // ⬅️ À chaque ouverture, on affiche l’historique
     }, 300);
+
+    // Affiche historique si déjà ouvert dans le passé
+    if (hasOpenedChat) {
+      chatLog.style.display = '';
+      inputBox.style.display = isTextMode ? 'flex' : 'none';
+      vocalCtaBox.style.display = isTextMode ? 'none' : 'flex';
+      suggBox.style.display = 'none';
+      renderHistory();
+    } else {
+      // Première ouverture : suggestions only, pas de chatLog ni input
+      chatLog.style.display = 'none';
+      inputBox.style.display = 'none';
+      vocalCtaBox.style.display = 'none';
+      suggBox.style.display = '';
+    }
   };
 
   const header = document.createElement('div');
@@ -204,6 +208,9 @@ function initChatbot(config, backendUrl, clientId) {
   chatLog.style.position = 'relative';
   chatLog.style.transition = 'max-height 0.25s cubic-bezier(0.4,0.3,0.6,1)';
 
+  // Par défaut on cache le chatLog (modif majeure pour UX)
+  chatLog.style.display = hasOpenedChat ? '' : 'none';
+
   // === Bouton expand/reduce ===
   const expandBtn = document.createElement('button');
   expandBtn.innerHTML = '🗖';
@@ -258,7 +265,7 @@ function initChatbot(config, backendUrl, clientId) {
 
   // ======== INPUT & MIC/CTA VOCAL ========
   const inputBox = document.createElement('div');
-  inputBox.style.display = 'flex';
+  inputBox.style.display = hasOpenedChat ? 'flex' : 'none';
   inputBox.style.background = '#fff';
   inputBox.style.borderRadius = '16px';
   inputBox.style.alignItems = 'center';
@@ -283,13 +290,12 @@ function initChatbot(config, backendUrl, clientId) {
 
   // ======= BOUTON VOCAL MODE CTA (mode vocal uniquement) =========
   const vocalCtaBox = document.createElement('div');
-  vocalCtaBox.style.display = 'none';
+  vocalCtaBox.style.display = hasOpenedChat ? 'none' : 'none';
   vocalCtaBox.style.justifyContent = 'center';
   vocalCtaBox.style.alignItems = 'center';
   vocalCtaBox.style.margin = '12px 0 0 0';
   vocalCtaBox.style.height = '46px';
 
-  // Le bouton noir CTA
   const vocalCtaBtn = document.createElement('button');
   vocalCtaBtn.innerHTML = `<span style="font-size:1.25em;vertical-align:middle;margin-right:6px;">📞</span><b>CHAT VOCAL</b>`;
   Object.assign(vocalCtaBtn.style, {
@@ -301,7 +307,6 @@ function initChatbot(config, backendUrl, clientId) {
   });
 
   vocalCtaBtn.onclick = () => {
-    // Si lecture audio => coupe
     if (currentAudio && !currentAudio.paused) {
       currentAudio.pause();
       currentAudio.currentTime = 0;
@@ -348,6 +353,12 @@ function initChatbot(config, backendUrl, clientId) {
     updateModeUI();
   };
   function updateModeUI() {
+    if (!hasOpenedChat) {
+      // On ne montre rien avant première interaction
+      inputBox.style.display = 'none';
+      vocalCtaBox.style.display = 'none';
+      return;
+    }
     if (isTextMode) {
       inputBox.style.display = 'flex';
       sendBtn.style.display = 'inline-block';
@@ -362,38 +373,31 @@ function initChatbot(config, backendUrl, clientId) {
   footerNav.appendChild(textTab);
   widget.appendChild(footerNav);
 
-  // RGPD + Effacer l'historique
-  const rgpdBox = document.createElement('div');
-  rgpdBox.style.display = 'flex';
-  rgpdBox.style.justifyContent = 'space-between';
-  rgpdBox.style.alignItems = 'center';
-  rgpdBox.style.fontSize = '11px';
-  rgpdBox.style.marginTop = '6px';
-
+  // RGPD
   const rgpd = document.createElement('a');
   rgpd.href = config.rgpdLink;
   rgpd.textContent = 'Politique de confidentialité';
   rgpd.target = '_blank';
   Object.assign(rgpd.style, {
-    color: '#eee', textAlign: 'right'
+    fontSize: '11px', color: '#eee', marginTop: '6px', textAlign: 'right'
   });
+  widget.appendChild(rgpd);
 
-  // Nouveau lien "Effacer l'historique"
-  const clearLink = document.createElement('a');
-  clearLink.href = '#';
-  clearLink.textContent = 'Effacer l\'historique';
-  clearLink.style.color = '#eee';
-  clearLink.style.textDecoration = 'underline';
-  clearLink.onclick = (e) => {
+  // Effacer l'historique
+  const clearHistory = document.createElement('a');
+  clearHistory.href = "#";
+  clearHistory.textContent = "Effacer l'historique";
+  clearHistory.style.fontSize = "11px";
+  clearHistory.style.marginLeft = "16px";
+  clearHistory.style.color = "#bbb";
+  clearHistory.style.textDecoration = "underline";
+  clearHistory.onclick = (e) => {
     e.preventDefault();
-    clearHistory();
     chatHistory = [];
+    localStorage.setItem('chatbotChatHistory', '[]');
     renderHistory();
   };
-
-  rgpdBox.appendChild(rgpd);
-  rgpdBox.appendChild(clearLink);
-  widget.appendChild(rgpdBox);
+  rgpd.parentNode.insertBefore(clearHistory, rgpd.nextSibling);
 
   // --- Gestion vocale (bouton CTA noir + anim) ---
   recognition.onstart = () => {
@@ -433,6 +437,7 @@ function initChatbot(config, backendUrl, clientId) {
     }
   });
 
+  // Ajout loader à ce niveau
   let loader = null;
   function showLoader() {
     if (!loader) {
@@ -456,7 +461,7 @@ function initChatbot(config, backendUrl, clientId) {
   }
 
   // -- Ajout avatar bot, anim fadeIn, gestion audio --
-  function appendMessage(msg, sender, isHTML = false, silent = false) {
+  function appendMessage(msg, sender, isHTML = false) {
     const msgRow = document.createElement('div');
     msgRow.style.display = 'flex';
     msgRow.style.alignItems = 'flex-end';
@@ -496,32 +501,31 @@ function initChatbot(config, backendUrl, clientId) {
     msgRow.appendChild(div);
     chatLog.appendChild(msgRow);
     chatLog.scrollTop = chatLog.scrollHeight;
-
-    // === Ajoute à l'historique (sauf lors du renderHistory)
-    if (!silent) {
-      chatHistory.push({ msg, sender, isHTML });
-      saveHistory(chatHistory);
-    }
   }
 
-  // === Affiche tout l'historique (et efface les anciens messages à l'affichage)
+  // Affiche tout l'historique (reload, navigation, etc)
   function renderHistory() {
-    chatLog.innerHTML = "";
-    // Les boutons expand/reduce doivent rester
-    chatLog.appendChild(expandBtn);
-    chatLog.appendChild(reduceBtn);
-
-    if (chatHistory.length > 0) {
-      chatHistory.forEach(item => {
-        appendMessage(item.msg, item.sender, item.isHTML, true /*silent: pas de double save*/);
-      });
-    }
+    chatLog.innerHTML = '';
+    chatHistory.forEach(item => appendMessage(item.msg, item.sender, item.isHTML));
   }
 
   // ===== LOGIQUE D'ENVOI DE MESSAGE =====
   function handleMessage(msg) {
+    // ---- La toute première interaction : on bascule tout en mode "chat ouvert" ----
+    if (!hasOpenedChat) {
+      hasOpenedChat = true;
+      localStorage.setItem('chatbotHasOpened', 'true');
+      chatLog.style.display = '';
+      inputBox.style.display = isTextMode ? 'flex' : 'none';
+      vocalCtaBox.style.display = isTextMode ? 'none' : 'flex';
+      suggBox.style.display = 'none';
+      renderHistory();
+    }
+
     suggBox.style.display = 'none';
     appendMessage(msg, 'user');
+    chatHistory.push({ msg, sender: 'user', isHTML: false });
+    localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
     showLoader();
     if (currentAudio && !currentAudio.paused) {
       currentAudio.pause();
@@ -538,20 +542,40 @@ function initChatbot(config, backendUrl, clientId) {
         console.log('[DEBUG FRONT] Reçu du backend:', data);
         hideLoader();
         appendMessage(data.text || '(Pas de réponse)', 'bot', true);
+        chatHistory.push({ msg: data.text || '(Pas de réponse)', sender: 'bot', isHTML: true });
+        localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
         if (!isTextMode) {
           if (data.audioUrl) {
             currentAudio = new Audio(data.audioUrl);
             currentAudio.play();
           } else {
             appendMessage("(Réponse vocale indisponible pour ce message)", 'bot');
+            chatHistory.push({ msg: "(Réponse vocale indisponible pour ce message)", sender: 'bot', isHTML: false });
+            localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
           }
         }
       })
       .catch((err) => {
         hideLoader();
         appendMessage("Désolé, le serveur est injoignable.", 'bot');
+        chatHistory.push({ msg: "Désolé, le serveur est injoignable.", sender: 'bot', isHTML: false });
+        localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
         showAlert("Erreur : le backend du chatbot n'est pas joignable.");
       });
+  }
+
+  // Première ouverture : on affiche l’historique ou suggestions
+  if (hasOpenedChat) {
+    chatLog.style.display = '';
+    inputBox.style.display = isTextMode ? 'flex' : 'none';
+    vocalCtaBox.style.display = isTextMode ? 'none' : 'flex';
+    suggBox.style.display = 'none';
+    renderHistory();
+  } else {
+    chatLog.style.display = 'none';
+    inputBox.style.display = 'none';
+    vocalCtaBox.style.display = 'none';
+    suggBox.style.display = '';
   }
 
   updateModeUI();
