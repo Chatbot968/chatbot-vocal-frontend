@@ -79,7 +79,51 @@ function initChatbot(config, backendUrl, clientId) {
   // Toutes les variables (comme avant)
   let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, isWidgetOpen = false;
 
-  // -- PATCH : always define closeWidget early --
+  // -------- PATCH ADAPT MOBILE 65vw/65vh -----------
+  function adaptMobile() {
+    if (window.innerWidth < 500) {
+      widget.style.width = "65vw";
+      widget.style.maxWidth = "65vw";
+      widget.style.minWidth = "0";
+      widget.style.left = "";
+      widget.style.right = "2vw";
+      widget.style.bottom = "2vw";
+      widget.style.top = "";
+      widget.style.borderRadius = "18px";
+      widget.style.padding = "4vw 2vw 2vw 2vw";
+      widget.style.position = "fixed";
+      widget.style.height = "auto";
+      widget.style.maxHeight = (window.innerHeight * 0.65) + "px";
+      container.style.position = "fixed";
+      container.style.left = "";
+      container.style.right = "2vw";
+      container.style.bottom = "2vw";
+      container.style.top = "";
+      container.style.width = "";
+      container.style.height = "";
+      document.body.style.overflow = '';
+    } else {
+      widget.style.width = "350px";
+      widget.style.maxWidth = "90vw";
+      widget.style.borderRadius = "20px";
+      widget.style.left = "";
+      widget.style.right = "20px";
+      widget.style.top = "";
+      widget.style.bottom = "20px";
+      widget.style.position = "fixed";
+      widget.style.height = "auto";
+      widget.style.maxHeight = "90vh";
+      container.style.position = "fixed";
+      container.style.left = "";
+      container.style.right = "20px";
+      container.style.bottom = "20px";
+      container.style.top = "";
+      container.style.width = "";
+      container.style.height = "";
+      document.body.style.overflow = '';
+    }
+  }
+  // ----------- PATCH FERMETURE --------
   function closeWidget() {
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
@@ -92,7 +136,9 @@ function initChatbot(config, backendUrl, clientId) {
       document.body.style.overflow = '';
       window.scrollTo(0, 0);
     }
+    if (typeof widget !== "undefined" && widget) widget.blur?.();
   }
+
   // NE PAS TOUCHER AU CONTAINER !! Il doit rester dans le DOM
   let container = document.querySelector('#chatbot-widget-container');
   if (!container) {
@@ -104,7 +150,7 @@ function initChatbot(config, backendUrl, clientId) {
     container.style.zIndex = '9999';
     document.body.appendChild(container);
   } else {
-    container.style.display = ''; // On remet visible au cas où
+    container.style.display = '';
     isWidgetOpen = false;
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
@@ -174,39 +220,12 @@ function initChatbot(config, backendUrl, clientId) {
   widget.classList.add('custom-chatbot-widget');
   shadow.appendChild(widget);
 
-  // --- RESPONSIVITÉ
-  function adaptMobile() {
-    if (window.innerWidth < 500) {
-      widget.style.width = "98vw";
-      widget.style.maxWidth = "98vw";
-      widget.style.left = "";
-      widget.style.right = "1vw";
-      widget.style.bottom = "2vw";
-      widget.style.borderRadius = "20px";
-      widget.style.padding = "4vw 2vw 2vw 2vw";
-      container.style.left = "";
-      container.style.right = "1vw";
-      container.style.width = "";
-      container.style.bottom = "2vw";
-      container.style.top = "";
-      widget.style.position = "fixed";
-    } else {
-      widget.style.width = "350px";
-      widget.style.maxWidth = "90vw";
-      widget.style.borderRadius = "20px";
-      widget.style.left = "";
-      widget.style.right = "20px";
-      container.style.left = "";
-      container.style.right = "20px";
-      container.style.width = "";
-      container.style.bottom = "20px";
-      container.style.top = "";
-    }
-  }
+  // === RESPONSIVITÉ PATCHÉE ===
+  window.addEventListener('resize', adaptMobile);
+  window.addEventListener('orientationchange', adaptMobile);
 
   // === OUVERTURE/FERMETURE PATCHÉE ===
   function openWidget() {
-    console.log('[DEBUG] openWidget appelée');
     if (typeof container !== "undefined" && container) container.style.display = '';
     if (typeof widget !== "undefined" && widget) widget.style.display = '';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'none';
@@ -263,7 +282,6 @@ function initChatbot(config, backendUrl, clientId) {
   header.appendChild(closeBtn);
   widget.appendChild(header);
 
-  // -- Welcome, suggestions, chatLog, inputBox, vocal, footerNav, etc. --
   function getWelcomeMsg() {
     const h = new Date().getHours();
     if (h < 6) return "🌙 Bonsoir !<br><strong>Que puis-je faire pour vous ?</strong>";
@@ -560,7 +578,7 @@ function initChatbot(config, backendUrl, clientId) {
   }
 
   function appendMessage(msg, sender, isHTML = false) {
-    if (!chatLog) return; // PATCH sécurité !
+    if (!chatLog) return;
     const msgRow = document.createElement('div');
     msgRow.style.display = 'flex';
     msgRow.style.alignItems = 'flex-end';
@@ -588,7 +606,7 @@ function initChatbot(config, backendUrl, clientId) {
     div.style.maxWidth = '85%';
     div.style.overflowWrap = 'break-word';
     div.style.fontSize = "1em";
-    if (isHTML && sender === 'bot') {
+    if (isHTML && sender === 'bot' && window.marked && window.DOMPurify) {
       const html = marked.parse(msg);
       div.innerHTML = DOMPurify.sanitize(html, {
         ALLOWED_TAGS: ['b', 'i', 'strong', 'a', 'img', 'br', 'ul', 'li', 'p'],
@@ -603,13 +621,13 @@ function initChatbot(config, backendUrl, clientId) {
   }
 
   function renderHistory() {
-    if (!chatLog) return; // PATCH sécurité !
+    if (!chatLog) return;
     chatLog.innerHTML = '';
     chatHistory.forEach(item => appendMessage(item.msg, item.sender, item.isHTML));
   }
 
   function handleMessage(msg) {
-    if (!chatLog) return; // PATCH sécurité !
+    if (!chatLog) return;
     if (!hasOpenedChat) {
       hasOpenedChat = true;
       localStorage.setItem('chatbotHasOpened', 'true');
@@ -637,7 +655,6 @@ function initChatbot(config, backendUrl, clientId) {
     })
       .then(r => r.json())
       .then(data => {
-        console.log('[DEBUG FRONT] Reçu du backend:', data);
         hideLoader();
         appendMessage(data.text || '(Pas de réponse)', 'bot', true);
         chatHistory.push({ msg: data.text || '(Pas de réponse)', sender: 'bot', isHTML: true });
@@ -686,21 +703,23 @@ function initChatbot(config, backendUrl, clientId) {
   style.textContent = `
     @media (max-width: 500px) {
       .custom-chatbot-widget {
-        width: 70vw !important;
-        max-width: 70vw !important;
+        width: 65vw !important;
+        max-width: 65vw !important;
         min-width: 0 !important;
         left: unset !important;
-        right: 1vw !important;
+        right: 2vw !important;
         bottom: 2vw !important;
-        border-radius: 20px !important;
+        border-radius: 18px !important;
         box-shadow: 0 8px 32px #0002 !important;
         padding: 4vw 2vw 2vw 2vw !important;
         font-size: 1.06em !important;
-        max-height: 85vh !important;
+        max-height: 65vh !important;
+        height: auto !important;
         display: flex !important;
         flex-direction: column !important;
         position: fixed !important;
         z-index: 99999 !important;
+        top: unset !important;
       }
       .custom-chatbot-widget h2 {
         font-size: 1.09em !important;
