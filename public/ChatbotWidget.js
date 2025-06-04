@@ -675,6 +675,11 @@ function initChatbot(config, backendUrl, clientId) {
     button:focus { outline: 2px solid #009fff77 !important; }
     .msg-fadein { animation: fadeInUp 0.4s; }
     @keyframes fadeInUp { from { opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
-  `;
+  @media (max-width: 500px) {
+  .custom-chatbot-widget.closed {
+    display: none !important;
+  }
+}`;
+  
   shadow.appendChild(style);
 }
