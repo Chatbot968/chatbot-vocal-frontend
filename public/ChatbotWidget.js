@@ -76,6 +76,26 @@ function showAlert(msg) {
 }
 
 function initChatbot(config, backendUrl, clientId) {
+  // ========== FONCTION CLOSE WIDGET (DÉCLARÉE EN PREMIER POUR SÉCURITÉ GLOBALE) ==========
+  let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, isWidgetOpen = false;
+  function closeWidget() {
+    if (!widget || !launcher) return;
+    widget.style.display = 'none';
+    launcher.style.display = 'inline-block';
+    isWidgetOpen = false;
+    // SÉCURITÉ : On “nettoie” tous les display parasites (pour certains navigateurs mobiles)
+    widget.style.maxHeight = '';
+    widget.style.minHeight = '';
+    widget.style.position = '';
+    if (chatLog) chatLog.style.display = 'none';
+    if (inputBox) inputBox.style.display = 'none';
+    if (vocalCtaBox) vocalCtaBox.style.display = 'none';
+    if (suggBox) suggBox.style.display = '';
+  }
+
+  // Ferme le widget au démarrage (même avec historique)
+  window.addEventListener('DOMContentLoaded', closeWidget);
+
   const recognition = new window.SpeechRecognition();
   recognition.lang = 'fr-FR';
   recognition.continuous = false;
@@ -90,7 +110,6 @@ function initChatbot(config, backendUrl, clientId) {
   let isTextMode = true;
   let isListening = false;
   let currentAudio = null;
-  let isWidgetOpen = false;
 
   // --- GESTION DE L'HISTORIQUE & DE L'OUVERTURE CHAT ---
   let chatHistory = [];
@@ -113,7 +132,7 @@ function initChatbot(config, backendUrl, clientId) {
   const shadow = container.attachShadow({ mode: 'open' });
 
   // === Launcher button (🤖) ===
-  const launcher = document.createElement('button');
+  launcher = document.createElement('button');
   launcher.textContent = '🤖';
   Object.assign(launcher.style, {
     fontSize: '28px', border: 'none', background: config.color,
@@ -122,7 +141,7 @@ function initChatbot(config, backendUrl, clientId) {
   shadow.appendChild(launcher);
 
   // === Widget panel principal ===
-  const widget = document.createElement('div');
+  widget = document.createElement('div');
   Object.assign(widget.style, {
     display: 'none',
     flexDirection: 'column', width: '350px', maxWidth: '90vw',
@@ -162,14 +181,14 @@ function initChatbot(config, backendUrl, clientId) {
       container.style.top = "";
     }
   }
-  adaptMobile();
-  window.addEventListener('resize', adaptMobile);
 
   // === OUVERTURE/FERMETURE PATCHÉE ===
   function openWidget() {
-    launcher.style.display = 'none';
+    // Toujours forcer un état propre
     widget.style.display = 'flex';
+    launcher.style.display = 'none';
     isWidgetOpen = true;
+    adaptMobile(); // Toujours réappliquer le responsive à l'ouverture
     setTimeout(() => {
       if (isTextMode) input.focus();
     }, 300);
@@ -186,12 +205,19 @@ function initChatbot(config, backendUrl, clientId) {
       suggBox.style.display = '';
     }
   }
-  function closeWidget() {
-    widget.style.display = 'none';
-    launcher.style.display = 'inline-block';
-    isWidgetOpen = false;
-  }
   launcher.onclick = openWidget;
+
+  // Ferme le widget au resize/orientationchange si ouvert (et réadapte)
+  window.addEventListener('resize', () => {
+    adaptMobile();
+    if (window.innerWidth < 500 && isWidgetOpen) {
+      // Optionnel : tu peux choisir de fermer sur resize mobile, ou non.
+      // closeWidget();
+      widget.scrollTop = 0;
+      widget.style.top = '';
+      widget.style.bottom = window.innerHeight > 200 ? "2vw" : "0";
+    }
+  });
 
   // ========== UI DU CHATBOT (header, etc...) ==========
   const header = document.createElement('div');
@@ -209,7 +235,7 @@ function initChatbot(config, backendUrl, clientId) {
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '✕';
   Object.assign(closeBtn.style, {
-    border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer'
+    border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer', zIndex: '100001'
   });
   closeBtn.onclick = closeWidget;
   header.appendChild(closeBtn);
@@ -229,7 +255,7 @@ function initChatbot(config, backendUrl, clientId) {
   title.style.color = '#fff';
   widget.appendChild(title);
 
-  const suggBox = document.createElement('div');
+  suggBox = document.createElement('div');
   Object.assign(suggBox.style, {
     background: '#fff', borderRadius: '12px', padding: '12px',
     boxShadow: '0 2px 6px rgba(0,0,0,0.2)', marginBottom: '12px'
@@ -245,7 +271,7 @@ function initChatbot(config, backendUrl, clientId) {
   });
   widget.appendChild(suggBox);
 
-  const chatLog = document.createElement('div');
+  chatLog = document.createElement('div');
   chatLog.style.flex = '1';
   chatLog.style.overflowY = 'auto';
   chatLog.style.maxHeight = '160px';
@@ -308,14 +334,14 @@ function initChatbot(config, backendUrl, clientId) {
 
   widget.appendChild(chatLog);
 
-  const inputBox = document.createElement('div');
+  inputBox = document.createElement('div');
   inputBox.style.display = hasOpenedChat ? 'flex' : 'none';
   inputBox.style.background = '#fff';
   inputBox.style.borderRadius = '16px';
   inputBox.style.alignItems = 'center';
   inputBox.style.overflow = 'hidden';
 
-  const input = document.createElement('input');
+  input = document.createElement('input');
   input.placeholder = 'Votre message...';
   Object.assign(input.style, {
     flex: '1', padding: '10px', border: 'none', outline: 'none'
@@ -332,7 +358,7 @@ function initChatbot(config, backendUrl, clientId) {
   inputBox.appendChild(sendBtn);
   widget.appendChild(inputBox);
 
-  const vocalCtaBox = document.createElement('div');
+  vocalCtaBox = document.createElement('div');
   vocalCtaBox.style.display = hasOpenedChat ? 'none' : 'none';
   vocalCtaBox.style.justifyContent = 'center';
   vocalCtaBox.style.alignItems = 'center';
@@ -603,8 +629,22 @@ function initChatbot(config, backendUrl, clientId) {
       });
   }
 
-  // === PATCH DIEGO : widget TOUJOURS fermé au démarrage, même si historique ===
+  // ============ PATCH SWIPE DOWN TO CLOSE (UX mobile) ===========
+  let touchStartY = null;
+  widget.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) touchStartY = e.touches[0].clientY;
+  });
+  widget.addEventListener('touchmove', e => {
+    if (touchStartY !== null && e.touches.length === 1) {
+      const dy = e.touches[0].clientY - touchStartY;
+      if (dy > 60) { closeWidget(); touchStartY = null; }
+    }
+  });
+  widget.addEventListener('touchend', () => { touchStartY = null; });
+
+  // PATCH DIEGO : widget TOUJOURS fermé au démarrage, même si historique
   closeWidget();
+  adaptMobile(); // pour forcer le style dès le boot
 
   updateModeUI();
 
