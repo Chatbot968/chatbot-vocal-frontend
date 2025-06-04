@@ -16,7 +16,7 @@ async function loadAndInitChatbot() {
   const backendUrl = scriptTag?.getAttribute('data-backend-url') || "https://chatbot-vocal-backend.onrender.com";
   let config = {
     color: "#0078d4",
-    logo: null, // fix: nom du champ
+    logo: null,
     suggestions: [
       "Je souhaite prendre rendez-vous",
       "Quels sont vos services ?",
@@ -28,8 +28,7 @@ async function loadAndInitChatbot() {
     const res = await fetch(`${backendUrl}/config/${clientId}.json`);
     if (res.ok) {
       const cfg = await res.json();
-      config = { ...config, ...cfg }; // merge pour fallback auto sur les clés manquantes
-      // Correction automatique du champ logo/logoUrl
+      config = { ...config, ...cfg };
       if (cfg.logo && !cfg.logoUrl) config.logoUrl = cfg.logo;
       if (!cfg.logo && cfg.logoUrl) config.logo = cfg.logoUrl;
     } else {
@@ -77,7 +76,6 @@ function initChatbot(config, backendUrl, clientId) {
   let currentAudio = null;
 
   // --- GESTION DE L'HISTORIQUE & DE L'OUVERTURE CHAT ---
-  // On garde l'historique du chat (array d'objets {msg, sender, isHTML})
   let chatHistory = [];
   try {
     chatHistory = JSON.parse(localStorage.getItem('chatbotChatHistory') || '[]');
@@ -124,7 +122,6 @@ function initChatbot(config, backendUrl, clientId) {
       if (isTextMode) input.focus();
     }, 300);
 
-    // Affiche historique si déjà ouvert dans le passé
     if (hasOpenedChat) {
       chatLog.style.display = '';
       inputBox.style.display = isTextMode ? 'flex' : 'none';
@@ -132,7 +129,6 @@ function initChatbot(config, backendUrl, clientId) {
       suggBox.style.display = 'none';
       renderHistory();
     } else {
-      // Première ouverture : suggestions only, pas de chatLog ni input
       chatLog.style.display = 'none';
       inputBox.style.display = 'none';
       vocalCtaBox.style.display = 'none';
@@ -164,7 +160,6 @@ function initChatbot(config, backendUrl, clientId) {
   header.appendChild(closeBtn);
   widget.appendChild(header);
 
-  // -- Message d'accueil dynamique selon l'heure --
   function getWelcomeMsg() {
     const h = new Date().getHours();
     if (h < 6) return "🌙 Bonsoir !<br><strong>Que puis-je faire pour vous ?</strong>";
@@ -179,7 +174,6 @@ function initChatbot(config, backendUrl, clientId) {
   title.style.color = '#fff';
   widget.appendChild(title);
 
-  // Suggestions rapides
   const suggBox = document.createElement('div');
   Object.assign(suggBox.style, {
     background: '#fff', borderRadius: '12px', padding: '12px',
@@ -196,7 +190,6 @@ function initChatbot(config, backendUrl, clientId) {
   });
   widget.appendChild(suggBox);
 
-  // Zone de discussion + bouton expand intégré dedans
   const chatLog = document.createElement('div');
   chatLog.style.flex = '1';
   chatLog.style.overflowY = 'auto';
@@ -207,11 +200,8 @@ function initChatbot(config, backendUrl, clientId) {
   chatLog.style.borderRadius = '10px';
   chatLog.style.position = 'relative';
   chatLog.style.transition = 'max-height 0.25s cubic-bezier(0.4,0.3,0.6,1)';
-
-  // Par défaut on cache le chatLog (modif majeure pour UX)
   chatLog.style.display = hasOpenedChat ? '' : 'none';
 
-  // === Bouton expand/reduce ===
   const expandBtn = document.createElement('button');
   expandBtn.innerHTML = '🗖';
   Object.assign(expandBtn.style, {
@@ -263,7 +253,6 @@ function initChatbot(config, backendUrl, clientId) {
 
   widget.appendChild(chatLog);
 
-  // ======== INPUT & MIC/CTA VOCAL ========
   const inputBox = document.createElement('div');
   inputBox.style.display = hasOpenedChat ? 'flex' : 'none';
   inputBox.style.background = '#fff';
@@ -288,7 +277,6 @@ function initChatbot(config, backendUrl, clientId) {
   inputBox.appendChild(sendBtn);
   widget.appendChild(inputBox);
 
-  // ======= BOUTON VOCAL MODE CTA (mode vocal uniquement) =========
   const vocalCtaBox = document.createElement('div');
   vocalCtaBox.style.display = hasOpenedChat ? 'none' : 'none';
   vocalCtaBox.style.justifyContent = 'center';
@@ -322,7 +310,6 @@ function initChatbot(config, backendUrl, clientId) {
   vocalCtaBox.appendChild(vocalCtaBtn);
   widget.appendChild(vocalCtaBox);
 
-  // Tabs texte/vocal
   const footerNav = document.createElement('div');
   footerNav.style.display = 'flex';
   footerNav.style.justifyContent = 'space-around';
@@ -354,7 +341,6 @@ function initChatbot(config, backendUrl, clientId) {
   };
   function updateModeUI() {
     if (!hasOpenedChat) {
-      // On ne montre rien avant première interaction
       inputBox.style.display = 'none';
       vocalCtaBox.style.display = 'none';
       return;
@@ -373,7 +359,6 @@ function initChatbot(config, backendUrl, clientId) {
   footerNav.appendChild(textTab);
   widget.appendChild(footerNav);
 
-  // RGPD
   const rgpd = document.createElement('a');
   rgpd.href = config.rgpdLink;
   rgpd.textContent = 'Politique de confidentialité';
@@ -383,7 +368,6 @@ function initChatbot(config, backendUrl, clientId) {
   });
   widget.appendChild(rgpd);
 
-  // Effacer l'historique
   const clearHistory = document.createElement('a');
   clearHistory.href = "#";
   clearHistory.textContent = "Effacer l'historique";
@@ -399,7 +383,6 @@ function initChatbot(config, backendUrl, clientId) {
   };
   rgpd.parentNode.insertBefore(clearHistory, rgpd.nextSibling);
 
-  // --- Gestion vocale (bouton CTA noir + anim) ---
   recognition.onstart = () => {
     isListening = true;
     vocalCtaBtn.innerHTML = `<span style="font-size:1.2em;margin-right:6px;">🛑</span><b>ARRÊTER</b>`;
@@ -437,7 +420,6 @@ function initChatbot(config, backendUrl, clientId) {
     }
   });
 
-  // Ajout loader à ce niveau
   let loader = null;
   function showLoader() {
     if (!loader) {
@@ -460,7 +442,6 @@ function initChatbot(config, backendUrl, clientId) {
     if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
   }
 
-  // -- Ajout avatar bot, anim fadeIn, gestion audio --
   function appendMessage(msg, sender, isHTML = false) {
     const msgRow = document.createElement('div');
     msgRow.style.display = 'flex';
@@ -503,15 +484,12 @@ function initChatbot(config, backendUrl, clientId) {
     chatLog.scrollTop = chatLog.scrollHeight;
   }
 
-  // Affiche tout l'historique (reload, navigation, etc)
   function renderHistory() {
     chatLog.innerHTML = '';
     chatHistory.forEach(item => appendMessage(item.msg, item.sender, item.isHTML));
   }
 
-  // ===== LOGIQUE D'ENVOI DE MESSAGE =====
   function handleMessage(msg) {
-    // ---- La toute première interaction : on bascule tout en mode "chat ouvert" ----
     if (!hasOpenedChat) {
       hasOpenedChat = true;
       localStorage.setItem('chatbotHasOpened', 'true');
@@ -564,7 +542,6 @@ function initChatbot(config, backendUrl, clientId) {
       });
   }
 
-  // Première ouverture : on affiche l’historique ou suggestions
   if (hasOpenedChat) {
     chatLog.style.display = '';
     inputBox.style.display = isTextMode ? 'flex' : 'none';
@@ -580,10 +557,43 @@ function initChatbot(config, backendUrl, clientId) {
 
   updateModeUI();
 
+  // === CSS ULTRA RESPONSIVE ===
   const style = document.createElement('style');
   style.textContent = `
     @media (max-width: 480px) {
-      .custom-chatbot-widget { width: 92vw !important; max-height: 85vh !important; border-radius: 16px !important; }
+      .custom-chatbot-widget {
+        width: 98vw !important;
+        max-width: 98vw !important;
+        min-width: 0 !important;
+        left: 1vw !important;
+        right: 1vw !important;
+        bottom: 2vw !important;
+        border-radius: 18px !important;
+        box-shadow: 0 8px 32px #0002 !important;
+        padding: 7vw 2vw 3vw 2vw !important;
+        font-size: 1.06em !important;
+        max-height: 88vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        position: fixed !important;
+        z-index: 99999 !important;
+      }
+      .custom-chatbot-widget h2 {
+        font-size: 1.09em !important;
+        margin-top: 0.3em !important;
+        margin-bottom: 1em !important;
+        word-break: break-word;
+        text-align: left !important;
+      }
+      .custom-chatbot-widget input {
+        font-size: 1em !important;
+      }
+      .custom-chatbot-widget .msg-fadein {
+        animation: fadeInUp 0.4s;
+      }
+      .custom-chatbot-widget {
+        overflow: auto !important;
+      }
     }
     .custom-chatbot-widget img { max-width: 100%; border-radius: 10px; margin-top: 6px; }
     .custom-chatbot-widget a { color: ${config.color}; text-decoration: underline; }
