@@ -115,6 +115,36 @@ function initChatbot(config, backendUrl, clientId) {
   widget.classList.add('custom-chatbot-widget');
   shadow.appendChild(widget);
 
+  // --- AJOUT POUR LA RESPONSIVITÉ ULTRA MOBILE ---
+  function adaptMobile() {
+    if (window.innerWidth < 500) {
+      widget.style.width = "100vw";
+      widget.style.maxWidth = "100vw";
+      widget.style.left = "0";
+      widget.style.right = "0";
+      widget.style.borderRadius = "0 0 22px 22px";
+      widget.style.padding = "4vw 2vw 2vw 2vw";
+      container.style.left = "0";
+      container.style.right = "0";
+      container.style.width = "100vw";
+      container.style.bottom = "0";
+      container.style.top = "";
+    } else {
+      widget.style.width = "350px";
+      widget.style.maxWidth = "90vw";
+      widget.style.borderRadius = "20px";
+      widget.style.left = "";
+      widget.style.right = "20px";
+      container.style.left = "";
+      container.style.right = "20px";
+      container.style.width = "";
+      container.style.bottom = "20px";
+      container.style.top = "";
+    }
+  }
+  adaptMobile();
+  window.addEventListener('resize', adaptMobile);
+
   launcher.onclick = () => {
     launcher.style.display = 'none';
     widget.style.display = 'flex';
@@ -375,11 +405,18 @@ function initChatbot(config, backendUrl, clientId) {
   clearHistory.style.marginLeft = "16px";
   clearHistory.style.color = "#bbb";
   clearHistory.style.textDecoration = "underline";
+  // --- PATCH : EFFACER L'HISTORIQUE + RESET SUGGESTIONS ---
   clearHistory.onclick = (e) => {
     e.preventDefault();
     chatHistory = [];
     localStorage.setItem('chatbotChatHistory', '[]');
-    renderHistory();
+    hasOpenedChat = false;
+    localStorage.setItem('chatbotHasOpened', 'false');
+    chatLog.innerHTML = '';
+    chatLog.style.display = 'none';
+    inputBox.style.display = 'none';
+    vocalCtaBox.style.display = 'none';
+    suggBox.style.display = '';
   };
   rgpd.parentNode.insertBefore(clearHistory, rgpd.nextSibling);
 
@@ -560,17 +597,17 @@ function initChatbot(config, backendUrl, clientId) {
   // === CSS ULTRA RESPONSIVE ===
   const style = document.createElement('style');
   style.textContent = `
-    @media (max-width: 480px) {
+    @media (max-width: 500px) {
       .custom-chatbot-widget {
-        width: 98vw !important;
-        max-width: 98vw !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
         min-width: 0 !important;
-        left: 1vw !important;
-        right: 1vw !important;
-        bottom: 2vw !important;
-        border-radius: 18px !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        border-radius: 0 0 22px 22px !important;
         box-shadow: 0 8px 32px #0002 !important;
-        padding: 7vw 2vw 3vw 2vw !important;
+        padding: 4vw 2vw 2vw 2vw !important;
         font-size: 1.06em !important;
         max-height: 88vh !important;
         display: flex !important;
