@@ -76,12 +76,20 @@ function showAlert(msg) {
 }
 
 function initChatbot(config, backendUrl, clientId) {
-  // ========== FONCTION CLOSE WIDGET (DÉCLARÉE EN PREMIER POUR SÉCURITÉ GLOBALE) ==========
-  let container, widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, isWidgetOpen = false;
-  
-  function closeWidget() {
-  console.log('[DEBUG] closeWidget appelée');
-  if (container) container.style.display = 'none'; // Cache TOUT le widget (et le launcher)
+  // --- CRÉATION DU CONTAINER ---
+  let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, isWidgetOpen = false;
+  // NE PAS TOUCHER AU CONTAINER !! Il doit rester dans le DOM
+  let container = document.querySelector('#chatbot-widget-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'chatbot-widget-container';
+    container.style.position = 'fixed';
+    container.style.bottom = '20px';
+    container.style.right = '20px';
+    container.style.zIndex = '9999';
+    document.body.appendChild(container);
+  } else {
+    container.style.display = ''; // On remet visible au cas où
   isWidgetOpen = false;
   // 1. Masquer TOUT le widget (panel dans le shadow DOM)
   widget.style.display = 'none';
