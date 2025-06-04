@@ -208,6 +208,7 @@ function initChatbot(config, backendUrl, clientId) {
   function openWidget() {
     console.log('[DEBUG] openWidget appelée');
     if (typeof container !== "undefined" && container) container.style.display = '';
+    if (typeof widget !== "undefined" && widget) widget.style.display = '';
     isWidgetOpen = true;
     adaptMobile();
     setTimeout(() => {
