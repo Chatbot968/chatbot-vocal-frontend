@@ -80,17 +80,27 @@ function initChatbot(config, backendUrl, clientId) {
   let container, widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, isWidgetOpen = false;
   
   function closeWidget() {
-    console.log('[DEBUG] closeWidget appelée');
-    if (!container) return; // PATCH : On vérifie que container existe
-    container.style.display = 'none'; // On masque TOUT le widget
-    isWidgetOpen = false;
-
-    // PATCH : Scrolling mobile, bug d’ancrage
-    if (window.innerWidth < 500) {
-      document.body.style.overflow = '';
-      window.scrollTo(0, 0);
-    }
+  console.log('[DEBUG] closeWidget appelée');
+  if (!widget || !launcher) return;
+  // 1. Masquer le widget (le panel principal dans le shadow DOM)
+  widget.style.display = 'none';
+  // 2. Afficher le launcher (bouton 🤖)
+  launcher.style.display = 'inline-block';
+  isWidgetOpen = false;
+  // 3. Reset styles parasites
+  widget.style.maxHeight = '';
+  widget.style.minHeight = '';
+  widget.style.position = '';
+  if (chatLog) chatLog.style.display = 'none';
+  if (inputBox) inputBox.style.display = 'none';
+  if (vocalCtaBox) vocalCtaBox.style.display = 'none';
+  if (suggBox) suggBox.style.display = '';
+  // 4. Patch mobile : reset scroll/overflow
+  if (window.innerWidth < 500) {
+    document.body.style.overflow = '';
+    window.scrollTo(0, 0);
   }
+}
 
   // PATCH : Widget fermé au démarrage, même avec historique
   window.addEventListener('DOMContentLoaded', closeWidget);
