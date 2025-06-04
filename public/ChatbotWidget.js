@@ -107,7 +107,7 @@ function initChatbot(config, backendUrl, clientId) {
   // === Widget panel principal ===
   const widget = document.createElement('div');
   Object.assign(widget.style, {
-    display: 'none', // PATCH: toujours caché au démarrage !
+    display: 'none', // === PATCH DIEGO : toujours caché au démarrage
     flexDirection: 'column', width: '350px', maxWidth: '90vw',
     background: `linear-gradient(to bottom, ${config.color}, #d7dcfa)`,
     color: '#000', borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
@@ -148,7 +148,7 @@ function initChatbot(config, backendUrl, clientId) {
   adaptMobile();
   window.addEventListener('resize', adaptMobile);
 
-  // PATCH: le bouton launcher est TOUJOURS visible au démarrage !
+  // === PATCH DIEGO : Etat initial forcé ! ===
   launcher.style.display = 'inline-block';
   widget.style.display = 'none';
 
@@ -589,21 +589,9 @@ function initChatbot(config, backendUrl, clientId) {
       });
   }
 
-  if (hasOpenedChat) {
-    chatLog.style.display = '';
-    inputBox.style.display = isTextMode ? 'flex' : 'none';
-    vocalCtaBox.style.display = isTextMode ? 'none' : 'flex';
-    suggBox.style.display = 'none';
-    renderHistory();
-  } else {
-    chatLog.style.display = 'none';
-    inputBox.style.display = 'none';
-    vocalCtaBox.style.display = 'none';
-    suggBox.style.display = '';
-    // PATCH: widget fermé au démarrage !
-    widget.style.display = 'none';
-    launcher.style.display = 'inline-block';
-  }
+  // === PATCH DIEGO : widget TOUJOURS fermé au démarrage, même si historique ===
+  widget.style.display = 'none';
+  launcher.style.display = 'inline-block';
 
   updateModeUI();
 
