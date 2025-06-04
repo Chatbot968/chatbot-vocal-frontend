@@ -79,7 +79,7 @@ function initChatbot(config, backendUrl, clientId) {
   // Toutes les variables (comme avant)
   let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, isWidgetOpen = false;
 
-   // -- PATCH : always define closeWidget early --
+  // -- PATCH : always define closeWidget early --
   function closeWidget() {
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
@@ -105,26 +105,18 @@ function initChatbot(config, backendUrl, clientId) {
     document.body.appendChild(container);
   } else {
     container.style.display = ''; // On remet visible au cas où
-  isWidgetOpen = false;
-  // 1. Masquer TOUT le widget (panel dans le shadow DOM)
-  widget.style.display = 'none';
-  // 2. Réafficher le bouton launcher (🤖)
-  launcher.style.display = 'inline-block';
-  isWidgetOpen = false;
-  // 3. En bonus, tu peux masquer tous les éléments internes si tu veux reset les états (optionnel)
-  if (chatLog) chatLog.style.display = 'none';
-  if (inputBox) inputBox.style.display = 'none';
-  if (vocalCtaBox) vocalCtaBox.style.display = 'none';
-  if (suggBox) suggBox.style.display = '';
-  // 4. Mobile patch : reset overflow
-  if (window.innerWidth < 500) {
-    document.body.style.overflow = '';
-    window.scrollTo(0, 0);
-    closeWidget();
+    isWidgetOpen = false;
+    if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
+    if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
+    if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
+    if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
+    if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
+    if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = '';
+    if (window.innerWidth < 500) {
+      document.body.style.overflow = '';
+      window.scrollTo(0, 0);
+    }
   }
-}
-
-
 
   const recognition = new window.SpeechRecognition();
   recognition.lang = 'fr-FR';
@@ -213,37 +205,37 @@ function initChatbot(config, backendUrl, clientId) {
   }
 
   // === OUVERTURE/FERMETURE PATCHÉE ===
- function openWidget() {
-  console.log('[DEBUG] openWidget appelée');
-  if (typeof container !== "undefined" && container) container.style.display = '';
-  isWidgetOpen = true;
-  adaptMobile();
-  setTimeout(() => {
-    if (isTextMode && typeof input !== "undefined" && input && input.focus) input.focus();
-  }, 300);
+  function openWidget() {
+    console.log('[DEBUG] openWidget appelée');
+    if (typeof container !== "undefined" && container) container.style.display = '';
+    isWidgetOpen = true;
+    adaptMobile();
+    setTimeout(() => {
+      if (isTextMode && typeof input !== "undefined" && input && input.focus) input.focus();
+    }, 300);
 
-  if (hasOpenedChat) {
-    if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = '';
-    if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = isTextMode ? 'flex' : 'none';
-    if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = isTextMode ? 'none' : 'flex';
-    if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = 'none';
-    if (typeof renderHistory === "function") renderHistory();
-  } else {
-    if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
-    if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
-    if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
-    if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = '';
+    if (hasOpenedChat) {
+      if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = '';
+      if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = isTextMode ? 'flex' : 'none';
+      if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = isTextMode ? 'none' : 'flex';
+      if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = 'none';
+      if (typeof renderHistory === "function") renderHistory();
+    } else {
+      if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
+      if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
+      if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
+      if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = '';
+    }
   }
-}
   launcher.onclick = openWidget;
 
   // Ferme le widget au resize/orientationchange si ouvert (et réadapte)
   window.addEventListener('resize', () => {
     adaptMobile();
     if (window.innerWidth < 500 && isWidgetOpen) {
-      widget.scrollTop = 0;
-      widget.style.top = '';
-      widget.style.bottom = window.innerHeight > 200 ? "2vw" : "0";
+      if (widget) widget.scrollTop = 0;
+      if (widget) widget.style.top = '';
+      if (widget) widget.style.bottom = window.innerHeight > 200 ? "2vw" : "0";
     }
   });
 
@@ -345,19 +337,23 @@ function initChatbot(config, backendUrl, clientId) {
   let isExpanded = false;
   expandBtn.onclick = () => {
     isExpanded = true;
-    chatLog.style.maxHeight = '74vh';
-    chatLog.style.minHeight = '320px';
+    if (chatLog) {
+      chatLog.style.maxHeight = '74vh';
+      chatLog.style.minHeight = '320px';
+    }
     expandBtn.style.display = 'none';
     reduceBtn.style.display = 'inline-block';
-    widget.style.maxHeight = '85vh';
+    if (widget) widget.style.maxHeight = '85vh';
   };
   reduceBtn.onclick = () => {
     isExpanded = false;
-    chatLog.style.maxHeight = '160px';
-    chatLog.style.minHeight = '';
+    if (chatLog) {
+      chatLog.style.maxHeight = '160px';
+      chatLog.style.minHeight = '';
+    }
     expandBtn.style.display = 'inline-block';
     reduceBtn.style.display = 'none';
-    widget.style.maxHeight = '90vh';
+    if (widget) widget.style.maxHeight = '90vh';
   };
 
   widget.appendChild(chatLog);
@@ -448,24 +444,24 @@ function initChatbot(config, backendUrl, clientId) {
     vocalTab.style.color = '#000';
     updateModeUI();
   };
- function updateModeUI() {
-  if (!hasOpenedChat) {
-    inputBox.style.display = 'none';
-    vocalCtaBox.style.display = 'none';
-    return;
+  function updateModeUI() {
+    if (!hasOpenedChat) {
+      if (inputBox) inputBox.style.display = 'none';
+      if (vocalCtaBox) vocalCtaBox.style.display = 'none';
+      return;
+    }
+    if (isTextMode) {
+      if (inputBox) inputBox.style.display = 'flex';
+      if (sendBtn) sendBtn.style.display = 'inline-block';
+      if (vocalCtaBox) vocalCtaBox.style.display = 'none';
+      setTimeout(() => {
+        if (isTextMode && typeof input !== "undefined" && input && input.focus) input.focus();
+      }, 100);
+    } else {
+      if (inputBox) inputBox.style.display = 'none';
+      if (vocalCtaBox) vocalCtaBox.style.display = 'flex';
+    }
   }
-  if (isTextMode) {
-    inputBox.style.display = 'flex';
-    sendBtn.style.display = 'inline-block';
-    vocalCtaBox.style.display = 'none';
-    setTimeout(() => {
-      if (isTextMode && typeof input !== "undefined" && input && input.focus) input.focus();
-    }, 100);
-  } else {
-    inputBox.style.display = 'none';
-    vocalCtaBox.style.display = 'flex';
-  }
-}
   footerNav.appendChild(vocalTab);
   footerNav.appendChild(textTab);
   widget.appendChild(footerNav);
@@ -492,11 +488,11 @@ function initChatbot(config, backendUrl, clientId) {
     localStorage.setItem('chatbotChatHistory', '[]');
     hasOpenedChat = false;
     localStorage.setItem('chatbotHasOpened', 'false');
-    chatLog.innerHTML = '';
-    chatLog.style.display = 'none';
-    inputBox.style.display = 'none';
-    vocalCtaBox.style.display = 'none';
-    suggBox.style.display = '';
+    if (chatLog) chatLog.innerHTML = '';
+    if (chatLog) chatLog.style.display = 'none';
+    if (inputBox) inputBox.style.display = 'none';
+    if (vocalCtaBox) vocalCtaBox.style.display = 'none';
+    if (suggBox) suggBox.style.display = '';
     closeWidget();
   };
   rgpd.parentNode.insertBefore(clearHistory, rgpd.nextSibling);
@@ -552,14 +548,17 @@ function initChatbot(config, backendUrl, clientId) {
       loader.style.display = 'flex';
       loader.style.gap = '3px';
     }
-    chatLog.appendChild(loader);
-    chatLog.scrollTop = chatLog.scrollHeight;
+    if (chatLog) {
+      chatLog.appendChild(loader);
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
   }
   function hideLoader() {
     if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
   }
 
   function appendMessage(msg, sender, isHTML = false) {
+    if (!chatLog) return; // PATCH sécurité !
     const msgRow = document.createElement('div');
     msgRow.style.display = 'flex';
     msgRow.style.alignItems = 'flex-end';
@@ -602,23 +601,24 @@ function initChatbot(config, backendUrl, clientId) {
   }
 
   function renderHistory() {
-  if (!chatLog) return; // PATCH sécurité !
-  chatLog.innerHTML = '';
-  chatHistory.forEach(item => appendMessage(item.msg, item.sender, item.isHTML));
-}
+    if (!chatLog) return; // PATCH sécurité !
+    chatLog.innerHTML = '';
+    chatHistory.forEach(item => appendMessage(item.msg, item.sender, item.isHTML));
+  }
 
   function handleMessage(msg) {
+    if (!chatLog) return; // PATCH sécurité !
     if (!hasOpenedChat) {
       hasOpenedChat = true;
       localStorage.setItem('chatbotHasOpened', 'true');
-      chatLog.style.display = '';
-      inputBox.style.display = isTextMode ? 'flex' : 'none';
-      vocalCtaBox.style.display = isTextMode ? 'none' : 'flex';
-      suggBox.style.display = 'none';
+      if (chatLog) chatLog.style.display = '';
+      if (inputBox) inputBox.style.display = isTextMode ? 'flex' : 'none';
+      if (vocalCtaBox) vocalCtaBox.style.display = isTextMode ? 'none' : 'flex';
+      if (suggBox) suggBox.style.display = 'none';
       renderHistory();
     }
 
-    suggBox.style.display = 'none';
+    if (suggBox) suggBox.style.display = 'none';
     appendMessage(msg, 'user');
     chatHistory.push({ msg, sender: 'user', isHTML: false });
     localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
