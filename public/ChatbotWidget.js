@@ -1,19 +1,21 @@
-// =========== PATCH ANTI-BUG ET VERSIONNING CHATBOTWIDGET ===========
+/// =========== PATCH ANTI-DOUBLE-INJECTION & VERSIONNING CHATBOTWIDGET ===========
 
-if (!window.CHATBOT_WIDGET_VERSION) {
-  window.CHATBOT_WIDGET_VERSION = 'v7 - ' + new Date().toISOString();
-  console.log('🟢 [ChatbotWidget] Version chargée :', window.CHATBOT_WIDGET_VERSION);
-} else {
-  console.warn('ChatbotWidget déjà chargé, version :', window.CHATBOT_WIDGET_VERSION);
-  // On arrête le script pour éviter tout bug
-  throw new Error('ChatbotWidget déjà injecté.');
+// Si déjà chargé, on n’exécute plus rien
+if (window.__CHATBOT_WIDGET_LOADED__) {
+  console.warn('[ChatbotWidget] Script déjà injecté, on stoppe pour éviter bug ou duplication.');
+  throw new Error('ChatbotWidget déjà injecté');
 }
-// Supprime toutes les anciennes instances du widget et alertes résiduelles (anti-double-injection)
+window.__CHATBOT_WIDGET_LOADED__ = true;
+
+// Affiche la version dans la console pour vérif à distance
+window.CHATBOT_WIDGET_VERSION = 'v8 - ' + new Date().toISOString();
+console.log('🟢 [ChatbotWidget] Version chargée :', window.CHATBOT_WIDGET_VERSION);
+
+// Nettoyage de toutes anciennes instances du widget (shadow DOM inclus, pour être sûr)
 (function() {
-  // Sélectionne et supprime tout widget précédent selon ta structure
   const allContainers = document.querySelectorAll('div[style*="z-index: 9999"]');
   allContainers.forEach(el => el.parentNode && el.parentNode.removeChild(el));
-  // Supprime les anciennes alertes globales éventuelles
+  // Supprime les alertes globales éventuelles
   const oldAlerts = document.querySelectorAll('#chatbot-global-alert');
   oldAlerts.forEach(el => el.parentNode && el.parentNode.removeChild(el));
 })();
