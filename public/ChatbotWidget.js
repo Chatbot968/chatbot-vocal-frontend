@@ -599,8 +599,8 @@ function initChatbot(config, backendUrl, clientId) {
   style.textContent = `
     @media (max-width: 500px) {
       .custom-chatbot-widget {
-        width: 100vw !important;
-        max-width: 100vw !important;
+        width: 90vw !important;
+        max-width: 98vw !important;
         min-width: 0 !important;
         left: 0 !important;
         right: 0 !important;
