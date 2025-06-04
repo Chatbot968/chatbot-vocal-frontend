@@ -81,11 +81,10 @@ function initChatbot(config, backendUrl, clientId) {
   
   function closeWidget() {
   console.log('[DEBUG] closeWidget appelée');
-  if (!widget || !launcher) return;
+  if (container) container.style.display = 'none'; // Cache TOUT le widget (et le launcher)
+  isWidgetOpen = false;
   // 1. Masquer TOUT le widget (panel dans le shadow DOM)
   widget.style.display = 'none';
-  // Masque le container principal du widget (qui est en fixed en bas à droite)
-if (container) container.style.display = 'none';
   // 2. Réafficher le bouton launcher (🤖)
   launcher.style.display = 'inline-block';
   isWidgetOpen = false;
@@ -193,10 +192,7 @@ if (container) container.style.display = 'none';
   // === OUVERTURE/FERMETURE PATCHÉE ===
   function openWidget() {
   console.log('[DEBUG] openWidget appelée');
-  // 1. Ré-affiche le container principal
-  if (container) container.style.display = '';
-  if (widget) widget.style.display = 'flex';
-  if (launcher) launcher.style.display = 'none';
+  if (container) container.style.display = ''; // Ré-affiche le container
   isWidgetOpen = true;
   adaptMobile();
   setTimeout(() => {
