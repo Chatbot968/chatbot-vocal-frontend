@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import "./App.css";
+import ConfigForm from "./ConfigForm";
 
 function App() {
   useEffect(() => {
@@ -47,6 +48,8 @@ function App() {
       <footer>
         <p>© 2025 NovaCorp - Tous droits factices réservés.</p>
       </footer>
+
+      <ConfigForm />
     </div>
   );
 }
