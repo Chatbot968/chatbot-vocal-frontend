@@ -64,3 +64,16 @@ footer {
   margin-top: 10px;
   overflow: auto;
 }
+
+.open-form-btn {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #00796b;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+.open-form-btn:hover {
+  background-color: #00695c;
+}
