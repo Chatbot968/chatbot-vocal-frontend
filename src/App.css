@@ -1,4 +1,4 @@
-site-factice {
+.site-factice {
   font-family: 'Segoe UI', sans-serif;
   max-width: 800px;
   margin: auto;
@@ -38,4 +38,42 @@ footer {
   text-align: center;
   font-size: 0.9em;
   color: #888;
+}
+
+.config-form {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #ddd;
+}
+
+.config-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.config-form input,
+.config-form textarea {
+  padding: 6px;
+  font-size: 1em;
+}
+
+.generated-script {
+  background: #f5f5f5;
+  padding: 10px;
+  margin-top: 10px;
+  overflow: auto;
+}
+
+.open-form-btn {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #00796b;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+.open-form-btn:hover {
+  background-color: #00695c;
 }
