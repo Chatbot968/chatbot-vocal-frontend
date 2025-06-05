@@ -222,20 +222,26 @@ function initChatbot(config, backendUrl, clientId) {
     width: '180px',
     borderRadius: '20px',
     border: `1px solid ${config.color}`,
-    outline: 'none'
+    outline: 'none',
+    minHeight: '44px'
   });
   const sendBtn = document.createElement('button');
   sendBtn.textContent = '➤';
   Object.assign(sendBtn.style, {
     marginLeft: '6px',
-    padding: '6px',
+    width: '44px',
+    height: '44px',
+    padding: '0',
     borderRadius: '50%',
     background: config.color,
     color: '#fff',
-    fontSize: '16px',
+    fontSize: '20px',
     border: 'none',
     cursor: 'pointer',
-    boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+    boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
   });
   textForm.appendChild(textInput);
   textForm.appendChild(sendBtn);
