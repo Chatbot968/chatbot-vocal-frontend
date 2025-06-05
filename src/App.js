@@ -1,7 +1,9 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "./App.css";
+import ConfigForm from "./ConfigForm";
 
 function App() {
+  const [showForm, setShowForm] = useState(false);
   useEffect(() => {
     // Définis ici l'ID du client et l'URL du backend
     const CLIENT_ID = "novacorp"; // ← L'ID pour charger config/novacorp.json
@@ -34,6 +36,13 @@ function App() {
           <li>Automatisation intelligente</li>
           <li>Analyse de données environnementales</li>
         </ul>
+        <button
+          className="open-form-btn"
+          onClick={() => setShowForm((v) => !v)}
+        >
+          Formulaire
+        </button>
+        {showForm && <ConfigForm />}
       </section>
 
       <section>
@@ -47,6 +56,7 @@ function App() {
       <footer>
         <p>© 2025 NovaCorp - Tous droits factices réservés.</p>
       </footer>
+
     </div>
   );
 }
