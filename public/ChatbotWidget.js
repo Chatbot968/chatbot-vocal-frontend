@@ -227,7 +227,7 @@ function initChatbot(config, backendUrl, clientId) {
   // === OUVERTURE/FERMETURE PATCHÉE ===
   function openWidget() {
     if (typeof container !== "undefined" && container) container.style.display = '';
-    if (typeof widget !== "undefined" && widget) widget.style.display = '';
+    if (typeof widget !== "undefined" && widget) widget.style.display = 'flex';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'none';
     isWidgetOpen = true;
     adaptMobile();
@@ -715,7 +715,7 @@ function initChatbot(config, backendUrl, clientId) {
         font-size: 1.06em !important;
         max-height: 65vh !important;
         height: auto !important;
-        display: flex !important;
+        display: flex;
         flex-direction: column !important;
         position: fixed !important;
         z-index: 99999 !important;
