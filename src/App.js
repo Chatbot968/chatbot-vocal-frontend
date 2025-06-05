@@ -36,6 +36,7 @@ function App() {
           <li>Analyse de données environnementales</li>
         </ul>
       </section>
+      <ConfigForm />
 
       <section>
         <h2>Qui sommes-nous ?</h2>
@@ -49,7 +50,6 @@ function App() {
         <p>© 2025 NovaCorp - Tous droits factices réservés.</p>
       </footer>
 
-      <ConfigForm />
     </div>
   );
 }
