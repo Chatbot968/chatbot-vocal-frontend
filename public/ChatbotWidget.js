@@ -381,11 +381,16 @@ function initChatbot(config, backendUrl, clientId) {
   inputBox.style.borderRadius = '16px';
   inputBox.style.alignItems = 'center';
   inputBox.style.overflow = 'hidden';
+  inputBox.style.padding = '0 4px';
 
   input = document.createElement('input');
   input.placeholder = 'Votre message...';
   Object.assign(input.style, {
-    flex: '1', padding: '10px', border: 'none', outline: 'none'
+    flex: '1',
+    padding: '10px',
+    border: 'none',
+    outline: 'none',
+    minHeight: '44px'
   });
 
   const sendBtn = document.createElement('button');
@@ -394,12 +399,15 @@ function initChatbot(config, backendUrl, clientId) {
     border: 'none',
     background: config.color,
     color: '#fff',
-    padding: '0 14px',
+    width: '44px',
+    height: '44px',
+    padding: '0',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    height: '100%'
+    fontSize: '20px',
+    borderRadius: '50%'
   });
 
   inputBox.appendChild(input);
