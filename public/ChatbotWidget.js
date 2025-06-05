@@ -237,16 +237,13 @@ function initChatbot(config, backendUrl, clientId) {
 
     if (hasOpenedChat) {
       if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = '';
-      if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = isTextMode ? 'flex' : 'none';
-      if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = isTextMode ? 'none' : 'flex';
       if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = 'none';
       if (typeof renderHistory === "function") renderHistory();
     } else {
       if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
-      if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
-      if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
       if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = '';
     }
+    updateModeUI();
   }
   launcher.onclick = openWidget;
 
@@ -394,8 +391,15 @@ function initChatbot(config, backendUrl, clientId) {
   const sendBtn = document.createElement('button');
   sendBtn.textContent = '➤';
   Object.assign(sendBtn.style, {
-    border: 'none', background: config.color, color: '#fff',
-    padding: '10px', cursor: 'pointer'
+    border: 'none',
+    background: config.color,
+    color: '#fff',
+    padding: '0 14px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%'
   });
 
   inputBox.appendChild(input);
@@ -465,11 +469,6 @@ function initChatbot(config, backendUrl, clientId) {
     updateModeUI();
   };
   function updateModeUI() {
-    if (!hasOpenedChat) {
-      if (inputBox) inputBox.style.display = 'none';
-      if (vocalCtaBox) vocalCtaBox.style.display = 'none';
-      return;
-    }
     if (isTextMode) {
       if (inputBox) inputBox.style.display = 'flex';
       if (sendBtn) sendBtn.style.display = 'inline-block';
