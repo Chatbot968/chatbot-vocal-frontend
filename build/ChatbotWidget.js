@@ -5,7 +5,7 @@ if (window.__CHATBOT_WIDGET_LOADED__) {
 }
 window.__CHATBOT_WIDGET_LOADED__ = true;
 
-window.CHATBOT_WIDGET_VERSION = 'v10 - ' + new Date().toISOString();
+window.CHATBOT_WIDGET_VERSION = 'v11 - ' + new Date().toISOString();
 console.log('🟢 [ChatbotWidget] Version chargée :', window.CHATBOT_WIDGET_VERSION);
 
 (function() {
@@ -192,9 +192,25 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     return tmp.textContent || tmp.innerText || '';
   }
 
+  function extractProductSentence(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    const nameEl = tmp.querySelector('.product-name, [data-product-name]');
+    const priceEl = tmp.querySelector('.product-price, [data-product-price], .price');
+    if (nameEl && priceEl) {
+      const name = nameEl.textContent.trim();
+      const price = priceEl.textContent.trim();
+      if (name && price) {
+        return `${name} pour ${price}`;
+      }
+    }
+    return null;
+  }
+
   function speakText(html) {
     if (!window.speechSynthesis) return;
-    const text = sanitizeForSpeech(html);
+    const product = extractProductSentence(html);
+    const text = product || sanitizeForSpeech(html);
     const utterance = new SpeechSynthesisUtterance(text);
     window.speechSynthesis.speak(utterance);
   }
