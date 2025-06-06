@@ -62,7 +62,7 @@ function showAlert(msg) {
   const div = document.createElement('div');
   div.id = 'chatbot-global-alert';
   div.style.position = 'fixed';
-  div.style.bottom = '10px';
+  div.style.bottom = 'calc(10px + env(safe-area-inset-bottom))';
   div.style.right = '10px';
   div.style.background = '#f23';
   div.style.color = '#fff';
@@ -87,7 +87,7 @@ function initChatbot(config, backendUrl, clientId) {
       widget.style.minWidth = "0";
       widget.style.left = "";
       widget.style.right = "2vw";
-      widget.style.bottom = "2vw";
+      widget.style.bottom = "calc(2vw + env(safe-area-inset-bottom))";
       widget.style.top = "";
       widget.style.borderRadius = "18px";
       widget.style.padding = "4vw 2vw 2vw 2vw";
@@ -97,7 +97,7 @@ function initChatbot(config, backendUrl, clientId) {
       container.style.position = "fixed";
       container.style.left = "";
       container.style.right = "2vw";
-      container.style.bottom = "2vw";
+      container.style.bottom = "calc(2vw + env(safe-area-inset-bottom))";
       container.style.top = "";
       container.style.width = "";
       container.style.height = "";
@@ -109,14 +109,14 @@ function initChatbot(config, backendUrl, clientId) {
       widget.style.left = "";
       widget.style.right = "20px";
       widget.style.top = "";
-      widget.style.bottom = "20px";
+      widget.style.bottom = "calc(20px + env(safe-area-inset-bottom))";
       widget.style.position = "fixed";
       widget.style.height = "auto";
       widget.style.maxHeight = "90vh";
       container.style.position = "fixed";
       container.style.left = "";
       container.style.right = "20px";
-      container.style.bottom = "20px";
+      container.style.bottom = "calc(20px + env(safe-area-inset-bottom))";
       container.style.top = "";
       container.style.width = "";
       container.style.height = "";
@@ -145,7 +145,7 @@ function initChatbot(config, backendUrl, clientId) {
     container = document.createElement('div');
     container.id = 'chatbot-widget-container';
     container.style.position = 'fixed';
-    container.style.bottom = '20px';
+    container.style.bottom = 'calc(20px + env(safe-area-inset-bottom))';
     container.style.right = '20px';
     container.style.zIndex = '9999';
     document.body.appendChild(container);
@@ -206,7 +206,7 @@ function initChatbot(config, backendUrl, clientId) {
   // ---- SHADOW DOM START ----
   container = document.createElement('div');
   container.style.position = 'fixed';
-  container.style.bottom = '20px';
+  container.style.bottom = 'calc(20px + env(safe-area-inset-bottom))';
   container.style.right = '20px';
   container.style.zIndex = '9999';
   document.body.appendChild(container);
@@ -267,7 +267,9 @@ function initChatbot(config, backendUrl, clientId) {
     if (window.innerWidth < 500 && isWidgetOpen) {
       if (widget) widget.scrollTop = 0;
       if (widget) widget.style.top = '';
-      if (widget) widget.style.bottom = window.innerHeight > 200 ? "2vw" : "0";
+      if (widget) widget.style.bottom = window.innerHeight > 200
+        ? "calc(2vw + env(safe-area-inset-bottom))"
+        : "env(safe-area-inset-bottom)";
     }
   });
 
@@ -739,7 +741,7 @@ function initChatbot(config, backendUrl, clientId) {
         min-width: 0 !important;
         left: unset !important;
         right: 2vw !important;
-        bottom: 2vw !important;
+        bottom: calc(2vw + env(safe-area-inset-bottom)) !important;
         border-radius: 18px !important;
         box-shadow: 0 8px 32px #0002 !important;
         padding: 4vw 2vw 2vw 2vw !important;
