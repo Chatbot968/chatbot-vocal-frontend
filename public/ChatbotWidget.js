@@ -766,5 +766,6 @@ function initChatbot(config, backendUrl, clientId) {
     .msg-fadein { animation: fadeInUp 0.4s; }
     @keyframes fadeInUp { from { opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
   `;
-  shadow.appendChild(style);
-}
+    shadow.appendChild(style);
+} // <-- Ferme la fonction principale !
+)(); // <-- Exécute-la immédiatement !
