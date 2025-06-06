@@ -422,25 +422,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     }
   });
 
-  const sendBtn = document.createElement('button');
-  sendBtn.textContent = '➤';
-  Object.assign(sendBtn.style, {
-    border: 'none',
-    background: config.color,
-    color: '#fff',
-    width: '44px',
-    height: '44px',
-    padding: '0',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '20px',
-    borderRadius: '50%'
-  });
-
   inputBox.appendChild(input);
-  inputBox.appendChild(sendBtn);
   widget.appendChild(inputBox);
 
   vocalCtaBox = document.createElement('div');
@@ -514,7 +496,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     }
     if (isTextMode) {
       if (inputBox) inputBox.style.display = 'flex';
-      if (sendBtn) sendBtn.style.display = 'inline-block';
       if (vocalCtaBox) vocalCtaBox.style.display = 'none';
       setTimeout(() => {
         if (isTextMode && typeof input !== "undefined" && input && input.focus) input.focus();
@@ -580,12 +561,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     };
   }
 
-  sendBtn.onclick = () => {
-    if (input.value.trim()) {
-      handleMessage(input.value);
-      input.value = '';
-    }
-  };
 
   document.addEventListener('keydown', (e) => {
     if (e.key === "Escape" && isWidgetOpen) {
