@@ -1,5 +1,5 @@
-import Réagir, { useState } depuis 'réagir';          // 1er import
-import { VERSION_WIDGET } depuis './widgetVersion';   // 2ème import
+import React, { useState } from 'react';        // 1er import
+import { VERSION_WIDGET } from './widgetVersion';   // 2ème import
 
 const URL_BACKEND = "https://chatbot-vocal-backend.onrender.com";
 const URL_WIDGET = `https://chatbot-vocal-frontend.onrender.com/ChatbotWidget.js?v=${VERSION_WIDGET}`;
@@ -33,7 +33,7 @@ function ConfigForm() {
       });
       setStatus('Configuration enregistr\u00e9e !');
       setResultScript(
-        `<script src="${WIDGET_URL}" data-client-id="${clientId}" data-backend-url="${BACKEND_URL}"></script>`
+        `<script src="${URL_WIDGET}" data-client-id="${clientId}" data-backend-url="${URL_BACKEND}"></script>`
       );
     } catch (err) {
       console.error(err);
