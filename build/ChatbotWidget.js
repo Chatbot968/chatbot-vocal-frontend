@@ -5,7 +5,7 @@ if (window.__CHATBOT_WIDGET_LOADED__) {
 }
 window.__CHATBOT_WIDGET_LOADED__ = true;
 
-window.CHATBOT_WIDGET_VERSION = 'v10 - ' + new Date().toISOString();
+window.CHATBOT_WIDGET_VERSION = 'v11 - ' + new Date().toISOString();
 console.log('🟢 [ChatbotWidget] Version chargée :', window.CHATBOT_WIDGET_VERSION);
 
 (function() {
@@ -188,8 +188,29 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   function sanitizeForSpeech(html) {
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
-    tmp.querySelectorAll('a, img').forEach(el => el.remove());
-    return tmp.textContent || tmp.innerText || '';
+    tmp.querySelectorAll('a').forEach(a => {
+      const txt = document.createTextNode(a.textContent);
+      a.parentNode && a.parentNode.replaceChild(txt, a);
+    });
+    tmp.querySelectorAll('img').forEach(el => el.remove());
+    let text = tmp.textContent || tmp.innerText || '';
+    text = text.replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim();
+    return text;
+  }
+
+  function extractProductSentence(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    const nameEl = tmp.querySelector('.product-name, [data-product-name]');
+    const priceEl = tmp.querySelector('.product-price, [data-product-price], .price');
+    if (nameEl && priceEl) {
+      const name = nameEl.textContent.trim();
+      const price = priceEl.textContent.trim();
+      if (name && price) {
+        return `${name} pour ${price}`;
+      }
+    }
+    return null;
   }
 
   function buildSpeechSummary(html) {
@@ -210,12 +231,12 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     return text;
   }
 
-  function speakText(html) {
-    if (!window.speechSynthesis) return;
-    const text = buildSpeechSummary(html);
-    const utterance = new SpeechSynthesisUtterance(text);
-    window.speechSynthesis.speak(utterance);
-  }
+  function speakText(html) {function speakText(html) {
+  if (!window.speechSynthesis) return;
+  const text = buildSpeechSummary(html);
+  const utterance = new SpeechSynthesisUtterance(text);
+  window.speechSynthesis.speak(utterance);
+}
 
   // --- GESTION DE L'HISTORIQUE & DE L'OUVERTURE CHAT ---
   let chatHistory = [];
@@ -642,8 +663,17 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (isHTML && sender === 'bot' && window.marked && window.DOMPurify) {
       const html = marked.parse(msg);
       div.innerHTML = DOMPurify.sanitize(html, {
-        ALLOWED_TAGS: ['b', 'i', 'strong', 'a', 'img', 'br', 'ul', 'li', 'p'],
+        ALLOWED_TAGS: ['b', 'i', 'strong', 'a', 'img', 'br', 'ul', 'li', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'em', 'ol', 'blockquote'],
         ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'target']
+      });
+      div.querySelectorAll('a').forEach(a => {
+        a.style.background = config.color;
+        a.style.color = '#fff';
+        a.style.padding = '6px 10px';
+        a.style.borderRadius = '8px';
+        a.style.display = 'inline-block';
+        a.style.textDecoration = 'none';
+        a.style.marginTop = '4px';
       });
     } else {
       div.textContent = msg;
@@ -780,9 +810,37 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     }
     .custom-chatbot-widget img { max-width: 100%; border-radius: 10px; margin-top: 6px; display: block; }
     .custom-chatbot-widget a {
-      color: ${config.color};
-      text-decoration: underline;
+      display: inline-block;
+      background: ${config.color};
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 8px;
+      text-decoration: none;
       font-size: 0.95em;
+      margin-top: 4px;
+    }
+    .custom-chatbot-widget h1,
+    .custom-chatbot-widget h2,
+    .custom-chatbot-widget h3,
+    .custom-chatbot-widget h4,
+    .custom-chatbot-widget h5,
+    .custom-chatbot-widget h6 {
+      margin: 0.4em 0;
+      font-size: 1.1em;
+    }
+    .custom-chatbot-widget p {
+      margin: 0.4em 0;
+    }
+    .custom-chatbot-widget ul,
+    .custom-chatbot-widget ol {
+      margin: 0.4em 0 0.4em 1.2em;
+      padding-left: 1em;
+    }
+    .custom-chatbot-widget blockquote {
+      margin: 0.4em 0;
+      padding-left: 0.8em;
+      border-left: 3px solid #ccc;
+      color: #555;
     }
     .chatbot-loader-bubbles {
       display: flex; align-items: center; height: 22px;
