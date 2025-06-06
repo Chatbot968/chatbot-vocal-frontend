@@ -1,466 +1,770 @@
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+// =========== PATCH ANTI-DOUBLE-INJECTION & VERSIONNING CHATBOTWIDGET ===========
+if (window.__CHATBOT_WIDGET_LOADED__) {
+  console.warn('[ChatbotWidget] Script déjà injecté, on stoppe pour éviter bug ou duplication.');
+  throw new Error('ChatbotWidget déjà injecté');
+}
+window.__CHATBOT_WIDGET_LOADED__ = true;
 
-if (!SpeechRecognition) {
-  alert("❌ Chatbot vocal non supporté sur ce navigateur");
-} else {
-  // Charge le widget (après config)
-  loadAndInitChatbot();
+window.CHATBOT_WIDGET_VERSION = 'v10 - ' + new Date().toISOString();
+console.log('🟢 [ChatbotWidget] Version chargée :', window.CHATBOT_WIDGET_VERSION);
+
+(function() {
+  const allContainers = document.querySelectorAll('div[style*="z-index: 9999"]');
+  allContainers.forEach(el => el.parentNode && el.parentNode.removeChild(el));
+  const oldAlerts = document.querySelectorAll('#chatbot-global-alert');
+  oldAlerts.forEach(el => el.parentNode && el.parentNode.removeChild(el));
+})();
+
+declareSpeechRecognition();
+
+function declareSpeechRecognition() {
+  if (!window._speechDeclared) {
+    window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    window._speechDeclared = true;
+  }
+  if (!window.SpeechRecognition) alert("❌ Chatbot vocal non supporté sur ce navigateur");
+  else loadAndInitChatbot();
 }
 
 async function loadAndInitChatbot() {
-  // 🔥 Récupère dynamiquement le clientId ET le backendUrl depuis le tag d’injection HTML
-  let clientId = null;
-  let backendUrl = null;
-  const widgetScript = document.currentScript || document.querySelector('script[data-client-id]');
-  if (widgetScript && widgetScript.getAttribute('data-client-id')) {
-    clientId = widgetScript.getAttribute('data-client-id');
-  } else {
-    clientId = "client_demo"; // fallback si jamais
-  }
-  // === Ajout backend dynamique ===
-  if (widgetScript && widgetScript.getAttribute('data-backend-url')) {
-    backendUrl = widgetScript.getAttribute('data-backend-url');
-  } else {
-    backendUrl = "https://chatbot-vocal-backend.onrender.com";
-  }
-
-  // 🔥 CHARGE LA CONFIG CLIENT DYNAMIQUE
-  let clientConfig = {
+  const scriptTag = document.currentScript || document.querySelector('script[data-client-id]');
+  const clientId = scriptTag?.getAttribute('data-client-id') || "novacorp";
+  const backendUrl = scriptTag?.getAttribute('data-backend-url') || "https://chatbot-vocal-backend.onrender.com";
+  let config = {
     color: "#0078d4",
+    logo: null,
     suggestions: [
       "Je souhaite prendre rendez-vous",
-      "Quels sont vos services ?",
+      "Quels sont vos services ?",
       "J’aimerais en savoir plus sur vos tarifs"
     ],
     rgpdLink: "/politique-confidentialite.html"
   };
   try {
-    const configUrl = `${backendUrl}/config/${clientId}.json`;
-    const res = await fetch(configUrl);
+    const res = await fetch(`${backendUrl}/config/${clientId}.json`);
     if (res.ok) {
-      clientConfig = await res.json();
+      const cfg = await res.json();
+      config = { ...config, ...cfg };
+      if (cfg.logo && !cfg.logoUrl) config.logoUrl = cfg.logo;
+      if (!cfg.logo && cfg.logoUrl) config.logo = cfg.logoUrl;
     } else {
-      console.warn("[Chatbot] Fichier config non trouvé, fallback par défaut.");
+      showAlert("Erreur de config : impossible de charger la configuration client.");
     }
   } catch (e) {
-    console.warn("[Chatbot] Impossible de charger la config, fallback.");
+    showAlert("Erreur réseau : la configuration du chatbot n'a pas pu être chargée.");
   }
+  initChatbot(config, backendUrl, clientId);
+}
 
-  initChatbot(clientConfig, backendUrl, clientId);
+function showAlert(msg) {
+  let exist = document.querySelector('#chatbot-global-alert');
+  if (exist) exist.remove();
+  const div = document.createElement('div');
+  div.id = 'chatbot-global-alert';
+  div.style.position = 'fixed';
+  div.style.bottom = '10px';
+  div.style.right = '10px';
+  div.style.background = '#f23';
+  div.style.color = '#fff';
+  div.style.fontWeight = 'bold';
+  div.style.padding = '16px 24px';
+  div.style.borderRadius = '12px';
+  div.style.zIndex = '999999';
+  div.textContent = msg;
+  document.body.appendChild(div);
+  setTimeout(() => { if (div.parentNode) div.parentNode.removeChild(div); }, 6500);
 }
 
 function initChatbot(config, backendUrl, clientId) {
-  // Génération d’un userId unique par visiteur
-  let userId = localStorage.getItem('chatbotUserId');
-  if (!userId) {
-    userId = 'user_' + Math.random().toString(36).substr(2, 9);
-    localStorage.setItem('chatbotUserId', userId);
+  // Toutes les variables (comme avant)
+  let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, isWidgetOpen = false;
+
+  // -------- PATCH ADAPT MOBILE 65vw/65vh -----------
+  function adaptMobile() {
+    if (window.innerWidth < 500) {
+      widget.style.width = "65vw";
+      widget.style.maxWidth = "65vw";
+      widget.style.minWidth = "0";
+      widget.style.left = "";
+      widget.style.right = "2vw";
+      widget.style.bottom = "2vw";
+      widget.style.top = "";
+      widget.style.borderRadius = "18px";
+      widget.style.padding = "4vw 2vw 2vw 2vw";
+      widget.style.position = "fixed";
+      widget.style.height = "auto";
+      widget.style.maxHeight = (window.innerHeight * 0.65) + "px";
+      container.style.position = "fixed";
+      container.style.left = "";
+      container.style.right = "2vw";
+      container.style.bottom = "2vw";
+      container.style.top = "";
+      container.style.width = "";
+      container.style.height = "";
+      document.body.style.overflow = '';
+    } else {
+      widget.style.width = "350px";
+      widget.style.maxWidth = "90vw";
+      widget.style.borderRadius = "20px";
+      widget.style.left = "";
+      widget.style.right = "20px";
+      widget.style.top = "";
+      widget.style.bottom = "20px";
+      widget.style.position = "fixed";
+      widget.style.height = "auto";
+      widget.style.maxHeight = "90vh";
+      container.style.position = "fixed";
+      container.style.left = "";
+      container.style.right = "20px";
+      container.style.bottom = "20px";
+      container.style.top = "";
+      container.style.width = "";
+      container.style.height = "";
+      document.body.style.overflow = '';
+    }
+  }
+  // ----------- PATCH FERMETURE --------
+  function closeWidget() {
+    if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
+    if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
+    isWidgetOpen = false;
+    if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
+    if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
+    if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
+    if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = '';
+    if (window.innerWidth < 500) {
+      document.body.style.overflow = '';
+      window.scrollTo(0, 0);
+    }
+    if (typeof widget !== "undefined" && widget) widget.blur?.();
   }
 
-  // Reconnaissance vocale
-  const recognition = new SpeechRecognition();
+  // NE PAS TOUCHER AU CONTAINER !! Il doit rester dans le DOM
+  let container = document.querySelector('#chatbot-widget-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'chatbot-widget-container';
+    container.style.position = 'fixed';
+    container.style.bottom = '20px';
+    container.style.right = '20px';
+    container.style.zIndex = '9999';
+    document.body.appendChild(container);
+  } else {
+    container.style.display = '';
+    isWidgetOpen = false;
+    if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
+    if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
+    if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
+    if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
+    if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
+    if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = '';
+    if (window.innerWidth < 500) {
+      document.body.style.overflow = '';
+      window.scrollTo(0, 0);
+    }
+  }
+
+  const recognition = new window.SpeechRecognition();
   recognition.lang = 'fr-FR';
   recognition.continuous = false;
   recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
 
-  let isTextMode = false;
-  let isMinimized = false;
+  const userId = localStorage.getItem('chatbotUserId') || (() => {
+    const id = 'user_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('chatbotUserId', id);
+    return id;
+  })();
 
-  // Création de l'UI
-  const container = document.createElement('div');
-  Object.assign(container.style, {
-    position: 'fixed',
-    bottom: '20px',
-    right: '20px',
-    zIndex: '1000',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-end',
-    gap: '8px',
-    transition: 'opacity .3s, transform .3s'
-  });
+  let isTextMode = true;
+  let isListening = false;
+  let currentAudio = null;
+
+  // --- GESTION DE L'HISTORIQUE & DE L'OUVERTURE CHAT ---
+  let chatHistory = [];
+  try {
+    chatHistory = JSON.parse(localStorage.getItem('chatbotChatHistory') || '[]');
+  } catch (e) {}
+  let hasOpenedChat = false;
+  try {
+    hasOpenedChat = !!JSON.parse(localStorage.getItem('chatbotHasOpened') || 'false');
+  } catch (e) {}
+
+  // ---- SHADOW DOM START ----
+  container = document.createElement('div');
+  container.style.position = 'fixed';
+  container.style.bottom = '20px';
+  container.style.right = '20px';
+  container.style.zIndex = '9999';
   document.body.appendChild(container);
 
-  // 0) Bouton de lancement (SVG stylé)
-  const launchBtn = document.createElement('button');
-  launchBtn.innerHTML = `<svg height="38" width="38" viewBox="0 0 38 38" fill="none"><circle cx="19" cy="19" r="19" fill="${config.color}"/><path d="M26 19l-8 5V14l8 5z" fill="#fff"/></svg>`;
-  Object.assign(launchBtn.style, {
-    border: 'none',
-    background: 'transparent',
-    boxShadow: '0 2px 6px rgba(0,0,0,0.20)',
-    padding: 0,
-    cursor: 'pointer',
-    outline: 'none',
-    display: 'block',
-    transition: 'opacity .2s',
+  const shadow = container.attachShadow({ mode: 'open' });
+
+  // === Launcher button (🤖) ===
+  launcher = document.createElement('button');
+  launcher.textContent = '🤖';
+  Object.assign(launcher.style, {
+    fontSize: '28px', border: 'none', background: config.color,
+    color: '#fff', borderRadius: '50%', padding: '10px', cursor: 'pointer'
   });
-  container.appendChild(launchBtn);
+  shadow.appendChild(launcher);
 
-  // Affiche/masque le widget (animation fade-in)
-  function openWidget() {
-    launchBtn.style.display = 'none';
-    mainWidget.style.display = 'flex';
-    mainWidget.style.opacity = 1;
-    mainWidget.style.transform = 'translateY(0)';
-    isMinimized = false;
-  }
-  function closeWidget() {
-    mainWidget.style.opacity = 0;
-    mainWidget.style.transform = 'translateY(60px)';
-    setTimeout(() => {
-      mainWidget.style.display = 'none';
-      launchBtn.style.display = 'block';
-      isMinimized = true;
-    }, 300);
-  }
-  launchBtn.onclick = openWidget;
-
-  // Main Widget
-  const mainWidget = document.createElement('div');
-  Object.assign(mainWidget.style, {
+  // === Widget panel principal ===
+  widget = document.createElement('div');
+  Object.assign(widget.style, {
     display: 'none',
-    flexDirection: 'column',
-    alignItems: 'flex-end',
-    gap: '8px',
-    opacity: 0,
-    background: 'none',
-    transition: 'opacity .3s, transform .3s',
-    transform: 'translateY(60px)',
-    minWidth: '310px',
-    maxWidth: '96vw'
+    flexDirection: 'column', width: '350px', maxWidth: '90vw',
+    background: `linear-gradient(to bottom, ${config.color}, #d7dcfa)`,
+    color: '#000', borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+    padding: '20px', fontFamily: 'sans-serif', maxHeight: '90vh', overflow: 'hidden'
   });
-  container.appendChild(mainWidget);
+  widget.classList.add('custom-chatbot-widget');
+  shadow.appendChild(widget);
 
-  // 1) Bouton Minimiser (croix SVG)
+  // === RESPONSIVITÉ PATCHÉE ===
+  window.addEventListener('resize', adaptMobile);
+  window.addEventListener('orientationchange', adaptMobile);
+
+  // === OUVERTURE/FERMETURE PATCHÉE ===
+  function openWidget() {
+    if (typeof container !== "undefined" && container) container.style.display = '';
+    if (typeof widget !== "undefined" && widget) widget.style.display = 'flex';
+    if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'none';
+    isWidgetOpen = true;
+    adaptMobile();
+    setTimeout(() => {
+      if (isTextMode && typeof input !== "undefined" && input && input.focus) input.focus();
+    }, 300);
+
+    if (hasOpenedChat) {
+      if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = '';
+      if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = 'none';
+      if (typeof renderHistory === "function") renderHistory();
+    } else {
+      if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
+      if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = '';
+    }
+    updateModeUI();
+  }
+  launcher.onclick = openWidget;
+
+  // Ferme le widget au resize/orientationchange si ouvert (et réadapte)
+  window.addEventListener('resize', () => {
+    adaptMobile();
+    if (window.innerWidth < 500 && isWidgetOpen) {
+      if (widget) widget.scrollTop = 0;
+      if (widget) widget.style.top = '';
+      if (widget) widget.style.bottom = window.innerHeight > 200 ? "2vw" : "0";
+    }
+  });
+
+  // ========== UI DU CHATBOT (header, etc...) ==========
+  const header = document.createElement('div');
+  header.style.display = 'flex';
+  header.style.justifyContent = 'space-between';
+  header.style.alignItems = 'center';
+
+  const logo = document.createElement('img');
+  logo.src = config.logoUrl || config.logo || '';
+  logo.alt = 'Logo';
+  logo.style.height = '30px';
+  logo.onerror = () => { logo.style.display = "none"; };
+  header.appendChild(logo);
+
   const closeBtn = document.createElement('button');
-  closeBtn.innerHTML = `<svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="13" fill="#f5f5f5"/><path d="M8 8l10 10M18 8L8 18" stroke="#666" stroke-width="2" stroke-linecap="round"/></svg>`;
+  closeBtn.textContent = '✕';
   Object.assign(closeBtn.style, {
-    border: 'none',
-    background: 'transparent',
-    cursor: 'pointer',
-    alignSelf: 'flex-end',
-    marginBottom: '-2px',
-    marginRight: '2px',
-    padding: '2px'
+    border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer', zIndex: '100001'
   });
   closeBtn.onclick = closeWidget;
-  mainWidget.appendChild(closeBtn);
+  header.appendChild(closeBtn);
+  widget.appendChild(header);
 
-  // 2) Flèche swipe dynamique (en haut)
-  const arrowBtn = document.createElement('button');
-  arrowBtn.innerHTML = '⬆︎';
-  Object.assign(arrowBtn.style, {
-    padding: '8px',
-    borderRadius: '50%',
-    background: config.color,
-    color: '#fff',
+  function getWelcomeMsg() {
+    const h = new Date().getHours();
+    if (h < 6) return "🌙 Bonsoir !<br><strong>Que puis-je faire pour vous ?</strong>";
+    if (h < 12) return "☀️ Bonjour !<br><strong>Que puis-je faire pour vous ?</strong>";
+    if (h < 18) return "👋 Bonjour !<br><strong>Que puis-je faire pour vous ?</strong>";
+    return "🌙 Bonsoir !<br><strong>Que puis-je faire pour vous ?</strong>";
+  }
+  const title = document.createElement('h2');
+  title.innerHTML = getWelcomeMsg();
+  title.style.margin = '16px 0';
+  title.style.color = '#fff';
+  widget.appendChild(title);
+
+  suggBox = document.createElement('div');
+  Object.assign(suggBox.style, {
+    background: '#fff', borderRadius: '12px', padding: '12px',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.2)', marginBottom: '12px'
+  });
+  (config.suggestions || []).forEach(s => {
+    const item = document.createElement('div');
+    item.textContent = s;
+    Object.assign(item.style, {
+      padding: '8px 0', borderBottom: '1px solid #eee', cursor: 'pointer'
+    });
+    item.onclick = () => handleMessage(s);
+    suggBox.appendChild(item);
+  });
+  widget.appendChild(suggBox);
+
+  chatLog = document.createElement('div');
+  chatLog.style.flex = '1';
+  chatLog.style.overflowY = 'auto';
+  chatLog.style.maxHeight = '160px';
+  chatLog.style.marginBottom = '10px';
+  chatLog.style.padding = '8px';
+  chatLog.style.background = '#fdfdfd';
+  chatLog.style.borderRadius = '10px';
+  chatLog.style.position = 'relative';
+  chatLog.style.transition = 'max-height 0.25s cubic-bezier(0.4,0.3,0.6,1)';
+  chatLog.style.display = hasOpenedChat ? '' : 'none';
+
+  const expandBtn = document.createElement('button');
+  expandBtn.innerHTML = '🗖';
+  Object.assign(expandBtn.style, {
+    position: 'absolute',
+    top: '8px',
+    right: '10px',
+    background: '#fff',
+    border: 'none',
+    color: '#888',
+    fontSize: '18px',
+    cursor: 'pointer',
+    zIndex: '10'
+  });
+  chatLog.appendChild(expandBtn);
+
+  const reduceBtn = document.createElement('button');
+  reduceBtn.textContent = '✕';
+  Object.assign(reduceBtn.style, {
+    position: 'absolute',
+    top: '8px',
+    right: '10px',
+    background: '#fff',
+    border: 'none',
+    color: '#888',
     fontSize: '20px',
     cursor: 'pointer',
+    zIndex: '10',
+    display: 'none'
+  });
+  chatLog.appendChild(reduceBtn);
+
+  let isExpanded = false;
+  expandBtn.onclick = () => {
+    isExpanded = true;
+    if (chatLog) {
+      chatLog.style.maxHeight = '74vh';
+      chatLog.style.minHeight = '320px';
+    }
+    expandBtn.style.display = 'none';
+    reduceBtn.style.display = 'inline-block';
+    if (widget) widget.style.maxHeight = '85vh';
+  };
+  reduceBtn.onclick = () => {
+    isExpanded = false;
+    if (chatLog) {
+      chatLog.style.maxHeight = '160px';
+      chatLog.style.minHeight = '';
+    }
+    expandBtn.style.display = 'inline-block';
+    reduceBtn.style.display = 'none';
+    if (widget) widget.style.maxHeight = '90vh';
+  };
+
+  widget.appendChild(chatLog);
+
+  inputBox = document.createElement('div');
+  inputBox.style.display = hasOpenedChat ? 'flex' : 'none';
+  inputBox.style.background = '#fff';
+  inputBox.style.borderRadius = '16px';
+  inputBox.style.alignItems = 'center';
+  inputBox.style.overflow = 'hidden';
+  inputBox.style.padding = '0 4px';
+
+  input = document.createElement('input');
+  input.placeholder = 'Votre message...';
+  Object.assign(input.style, {
+    flex: '1',
+    padding: '10px',
     border: 'none',
-    boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-    transition: 'transform .3s'
-  });
-  mainWidget.appendChild(arrowBtn);
-
-  // 3) Suggestions verticales stylées (mode vocal et texte)
-  const quickContainer = document.createElement('div');
-  quickContainer.style.display = 'flex';
-  quickContainer.style.margin = '0 0 8px 0';
-  quickContainer.style.transition = 'opacity .2s';
-  quickContainer.style.width = '100%';
-  quickContainer.style.flexDirection = 'column';
-  quickContainer.style.alignItems = 'stretch';
-
-  // ⬇️ Utilisation des suggestions dynamiques issues de la config
-  const quickReplies = Array.isArray(config.suggestions) && config.suggestions.length > 0 ? config.suggestions : [
-    "Je souhaite prendre rendez-vous",
-    "Quels sont vos services ?",
-    "J’aimerais en savoir plus sur vos tarifs"
-  ];
-  quickReplies.forEach(q => {
-    const btn = document.createElement('button');
-    btn.textContent = q;
-    btn.className = "quick-btn";
-    btn.style.margin = '0 0 10px 0';
-    btn.onclick = () => {
-      if (!isTextMode) {
-        const placeholder = appendLoadingBubble();
-        askBot(q).then(d => {
-          const rep = d.text?.trim()||'(Pas de réponse)';
-          if (placeholder && placeholder.parentNode) {
-            placeholder.parentNode.removeChild(placeholder);
-          }
-          playMp3FromBackend(d.audioUrl, rep);
-        });
-      } else {
-        textInput.value = q;
-        sendBtn.click();
-      }
-      quickContainer.style.display = 'none';
-    };
-    quickContainer.appendChild(btn);
-  });
-  mainWidget.appendChild(quickContainer);
-
-  // 4) Formulaire texte (caché par défaut)
-  const textForm = document.createElement('div');
-  Object.assign(textForm.style, {
-    display: 'none',
-    flexDirection: 'row',
-    alignItems: 'center',
-    background: '#fff',
-    borderRadius: '30px',
-    padding: '6px',
-    border: `1px solid ${config.color}`
-  });
-  const textInput = document.createElement('input');
-  textInput.type = 'text';
-  textInput.placeholder = 'Votre message…';
-  Object.assign(textInput.style, {
-    padding: '6px 10px',
-    width: '180px',
-    borderRadius: '20px',
-    border: `1px solid ${config.color}`,
     outline: 'none',
     minHeight: '44px'
   });
+
   const sendBtn = document.createElement('button');
   sendBtn.textContent = '➤';
   Object.assign(sendBtn.style, {
-    marginLeft: '6px',
+    border: 'none',
+    background: config.color,
+    color: '#fff',
     width: '44px',
     height: '44px',
     padding: '0',
-    borderRadius: '50%',
-    background: config.color,
-    color: '#fff',
-    fontSize: '20px',
-    border: 'none',
     cursor: 'pointer',
-    boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    fontSize: '20px',
+    borderRadius: '50%'
   });
-  textForm.appendChild(textInput);
-  textForm.appendChild(sendBtn);
-  mainWidget.appendChild(textForm);
 
-  // 5) Conteneur de chat texte
-  const chatContainer = document.createElement('div');
-  Object.assign(chatContainer.style, {
-    width: '300px',
-    maxWidth: '98vw',
-    maxHeight: '50vh',
-    overflowY: 'auto',
-    background: '#fff',
-    border: '1px solid #ccc',
-    borderRadius: '8px',
-    padding: '10px',
-    fontFamily: 'sans-serif',
-    fontSize: '14px',
-    color: '#000',
-    display: 'none',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+  inputBox.appendChild(input);
+  inputBox.appendChild(sendBtn);
+  widget.appendChild(inputBox);
+
+  vocalCtaBox = document.createElement('div');
+  vocalCtaBox.style.display = hasOpenedChat ? 'none' : 'none';
+  vocalCtaBox.style.justifyContent = 'center';
+  vocalCtaBox.style.alignItems = 'center';
+  vocalCtaBox.style.margin = '12px 0 0 0';
+  vocalCtaBox.style.height = '46px';
+
+  const vocalCtaBtn = document.createElement('button');
+  vocalCtaBtn.innerHTML = `<span style="font-size:1.25em;vertical-align:middle;margin-right:6px;">📞</span><b>CHAT VOCAL</b>`;
+  Object.assign(vocalCtaBtn.style, {
+    background: '#111', color: '#fff', border: 'none', borderRadius: '26px',
+    padding: '8px 28px', fontSize: '1.15em', cursor: 'pointer', fontWeight: 'bold',
+    display: 'flex', alignItems: 'center', gap: '7px', letterSpacing: '0.5px',
+    boxShadow: '0 2px 14px #181e3625', outline: 'none', minWidth: '170px',
+    transition: 'background 0.2s, color 0.2s'
   });
-  mainWidget.appendChild(chatContainer);
 
-  // 6) Bouton vocal
-  const vocalBtn = document.createElement('button');
-  vocalBtn.textContent = '📞 CHAT VOCAL';
-  Object.assign(vocalBtn.style, {
-    padding: '12px 24px',
-    borderRadius: '30px',
-    background: '#000',
-    color: '#fff',
-    fontSize: '16px',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+  vocalCtaBtn.onclick = () => {
+    if (currentAudio && !currentAudio.paused) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      currentAudio = null;
+      vocalCtaBtn.innerHTML = `<span style="font-size:1.25em;vertical-align:middle;margin-right:6px;">📞</span><b>CHAT VOCAL</b>`;
+      vocalCtaBtn.style.background = "#111";
+      return;
+    }
+    if (!isListening) recognition.start();
+    else recognition.stop();
+  };
+
+  vocalCtaBox.appendChild(vocalCtaBtn);
+  widget.appendChild(vocalCtaBox);
+
+  const footerNav = document.createElement('div');
+  footerNav.style.display = 'flex';
+  footerNav.style.justifyContent = 'space-around';
+  footerNav.style.marginTop = '16px';
+  footerNav.style.background = '#fff';
+  footerNav.style.borderRadius = '12px';
+  footerNav.style.padding = '8px';
+
+  const vocalTab = document.createElement('div');
+  vocalTab.innerHTML = '🎙️ Vocal';
+  vocalTab.style.cursor = 'pointer';
+  vocalTab.style.fontWeight = 'bold';
+
+  const textTab = document.createElement('div');
+  textTab.innerHTML = '💬 Texte';
+  textTab.style.cursor = 'pointer';
+
+  vocalTab.onclick = () => {
+    isTextMode = false;
+    vocalTab.style.color = config.color;
+    textTab.style.color = '#000';
+    updateModeUI();
+  };
+  textTab.onclick = () => {
+    isTextMode = true;
+    textTab.style.color = config.color;
+    vocalTab.style.color = '#000';
+    updateModeUI();
+  };
+  function updateModeUI() {
+    if (isTextMode) {
+      if (inputBox) inputBox.style.display = 'flex';
+      if (sendBtn) sendBtn.style.display = 'inline-block';
+      if (vocalCtaBox) vocalCtaBox.style.display = 'none';
+      setTimeout(() => {
+        if (isTextMode && typeof input !== "undefined" && input && input.focus) input.focus();
+      }, 100);
+    } else {
+      if (inputBox) inputBox.style.display = 'none';
+      if (vocalCtaBox) vocalCtaBox.style.display = 'flex';
+    }
+  }
+  footerNav.appendChild(vocalTab);
+  footerNav.appendChild(textTab);
+  widget.appendChild(footerNav);
+
+  const rgpd = document.createElement('a');
+  rgpd.href = config.rgpdLink;
+  rgpd.textContent = 'Politique de confidentialité';
+  rgpd.target = '_blank';
+  Object.assign(rgpd.style, {
+    fontSize: '11px', color: '#eee', marginTop: '6px', textAlign: 'right'
   });
-  mainWidget.appendChild(vocalBtn);
+  widget.appendChild(rgpd);
 
-  // 7) Lien RGPD dynamique
-  const rgpd = document.createElement('div');
-  rgpd.innerHTML = `<a href="${config.rgpdLink || '/politique-confidentialite.html'}" target="_blank" style="font-size:11px;color:#888;display:block;margin-top:5px;text-align:right">Politique de confidentialité</a>`;
-  mainWidget.appendChild(rgpd);
+  const clearHistory = document.createElement('a');
+  clearHistory.href = "#";
+  clearHistory.textContent = "Effacer l'historique";
+  clearHistory.style.fontSize = "11px";
+  clearHistory.style.marginLeft = "16px";
+  clearHistory.style.color = "#bbb";
+  clearHistory.style.textDecoration = "underline";
+  clearHistory.onclick = (e) => {
+    e.preventDefault();
+    chatHistory = [];
+    localStorage.setItem('chatbotChatHistory', '[]');
+    hasOpenedChat = false;
+    localStorage.setItem('chatbotHasOpened', 'false');
+    if (chatLog) chatLog.innerHTML = '';
+    if (chatLog) chatLog.style.display = 'none';
+    if (inputBox) inputBox.style.display = 'none';
+    if (vocalCtaBox) vocalCtaBox.style.display = 'none';
+    if (suggBox) suggBox.style.display = '';
+    closeWidget();
+  };
+  rgpd.parentNode.insertBefore(clearHistory, rgpd.nextSibling);
 
-  // === Utilitaires ===
-  function appendMessage(txt, sender = 'bot', isError = false) {
-    const msg = document.createElement('div');
-    msg.className = `chat-bubble ${sender}${isError ? ' error' : ''}`;
-    msg.textContent = txt;
-    chatContainer.appendChild(msg);
-    if (chatContainer.style.display === 'none') chatContainer.style.display = 'block';
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-    return msg;
+  recognition.onstart = () => {
+    isListening = true;
+    vocalCtaBtn.innerHTML = `<span style="font-size:1.2em;margin-right:6px;">🛑</span><b>ARRÊTER</b>`;
+    vocalCtaBtn.style.background = "#e32525";
+    vocalCtaBtn.style.color = "#fff";
+    vocalCtaBtn.style.boxShadow = "0 0 0 8px #e3252535";
+  };
+  recognition.onend = () => {
+    isListening = false;
+    vocalCtaBtn.innerHTML = `<span style="font-size:1.25em;margin-right:6px;">📞</span><b>CHAT VOCAL</b>`;
+    vocalCtaBtn.style.background = "#111";
+    vocalCtaBtn.style.color = "#fff";
+    vocalCtaBtn.style.boxShadow = "0 2px 14px #181e3625";
+  };
+  recognition.onresult = e => {
+    const txt = e.results[e.results.length - 1][0].transcript;
+    handleMessage(txt);
+  };
+
+  sendBtn.onclick = () => {
+    if (input.value.trim()) {
+      handleMessage(input.value);
+      input.value = '';
+    }
+  };
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === "Escape" && isWidgetOpen) {
+      closeWidget();
+    }
+    if (e.key === "Enter" && isTextMode && document.activeElement === input && input.value.trim()) {
+      handleMessage(input.value);
+      input.value = '';
+    }
+  });
+
+  let loader = null;
+  function showLoader() {
+    if (!loader) {
+      loader = document.createElement('div');
+      loader.className = 'chatbot-loader-bubbles';
+      loader.innerHTML = `<span></span><span></span><span></span>`;
+      loader.style.alignSelf = 'flex-start';
+      loader.style.margin = '6px 0';
+      loader.style.background = '#f4f4f4';
+      loader.style.padding = '8px 12px';
+      loader.style.borderRadius = '14px';
+      loader.style.maxWidth = '85%';
+      loader.style.display = 'flex';
+      loader.style.gap = '3px';
+    }
+    if (chatLog) {
+      chatLog.appendChild(loader);
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+  }
+  function hideLoader() {
+    if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
   }
 
-  function appendLoadingBubble() {
-    const bubble = document.createElement('div');
-    bubble.className = 'chat-bubble bot loading-bubble';
-    bubble.innerHTML = `<span class="dot-loader"><span>.</span><span>.</span><span>.</span></span>`;
-    chatContainer.appendChild(bubble);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-    return bubble;
+  function appendMessage(msg, sender, isHTML = false) {
+    if (!chatLog) return;
+    const msgRow = document.createElement('div');
+    msgRow.style.display = 'flex';
+    msgRow.style.alignItems = 'flex-end';
+    msgRow.style.margin = '8px 0';
+    msgRow.style.opacity = '0';
+    msgRow.style.transition = 'opacity 0.28s';
+
+    setTimeout(() => { msgRow.style.opacity = 1; }, 50);
+
+    if (sender === 'bot') {
+      const avatar = document.createElement('span');
+      avatar.textContent = '🤖';
+      avatar.style.fontSize = "22px";
+      avatar.style.marginRight = "8px";
+      msgRow.appendChild(avatar);
+    } else {
+      msgRow.style.justifyContent = "flex-end";
+    }
+
+    const div = document.createElement('div');
+    div.style.alignSelf = sender === 'user' ? 'flex-end' : 'flex-start';
+    div.style.background = sender === 'user' ? '#d0eaff' : '#f4f4f4';
+    div.style.padding = '8px 12px';
+    div.style.borderRadius = '14px';
+    div.style.maxWidth = '85%';
+    div.style.overflowWrap = 'break-word';
+    div.style.fontSize = "1em";
+    if (isHTML && sender === 'bot' && window.marked && window.DOMPurify) {
+      const html = marked.parse(msg);
+      div.innerHTML = DOMPurify.sanitize(html, {
+        ALLOWED_TAGS: ['b', 'i', 'strong', 'a', 'img', 'br', 'ul', 'li', 'p'],
+        ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'target']
+      });
+    } else {
+      div.textContent = msg;
+    }
+    msgRow.appendChild(div);
+    chatLog.appendChild(msgRow);
+    chatLog.scrollTop = chatLog.scrollHeight;
   }
 
-  // ⚡️ ENVOI AU BACKEND DYNAMIQUE
-  function askBot(msg) {
-    return fetch(`${backendUrl}/api/ask`, {
+  function renderHistory() {
+    if (!chatLog) return;
+    chatLog.innerHTML = '';
+    chatHistory.forEach(item => appendMessage(item.msg, item.sender, item.isHTML));
+  }
+
+  function handleMessage(msg) {
+    if (!chatLog) return;
+    if (!hasOpenedChat) {
+      hasOpenedChat = true;
+      localStorage.setItem('chatbotHasOpened', 'true');
+      if (chatLog) chatLog.style.display = '';
+      if (inputBox) inputBox.style.display = isTextMode ? 'flex' : 'none';
+      if (vocalCtaBox) vocalCtaBox.style.display = isTextMode ? 'none' : 'flex';
+      if (suggBox) suggBox.style.display = 'none';
+      renderHistory();
+    }
+
+    if (suggBox) suggBox.style.display = 'none';
+    appendMessage(msg, 'user');
+    chatHistory.push({ msg, sender: 'user', isHTML: false });
+    localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
+    showLoader();
+    if (currentAudio && !currentAudio.paused) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      currentAudio = null;
+    }
+    fetch(`${backendUrl}/api/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: userId, message: msg, clientId: clientId }) // <--- Ajout clientId ici !
+      body: JSON.stringify({ userId, message: msg, clientId, vocalMode: !isTextMode })
     })
       .then(r => r.json())
-      .catch(e => {
-        return { text: null, audioUrl: null };
+      .then(data => {
+        hideLoader();
+        appendMessage(data.text || '(Pas de réponse)', 'bot', true);
+        chatHistory.push({ msg: data.text || '(Pas de réponse)', sender: 'bot', isHTML: true });
+        localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
+        if (!isTextMode) {
+          if (data.audioUrl) {
+            currentAudio = new Audio(data.audioUrl);
+            currentAudio.play();
+          } else {
+            appendMessage("(Réponse vocale indisponible pour ce message)", 'bot');
+            chatHistory.push({ msg: "(Réponse vocale indisponible pour ce message)", sender: 'bot', isHTML: false });
+            localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
+          }
+        }
+      })
+      .catch((err) => {
+        hideLoader();
+        appendMessage("Désolé, le serveur est injoignable.", 'bot');
+        chatHistory.push({ msg: "Désolé, le serveur est injoignable.", sender: 'bot', isHTML: false });
+        localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
+        showAlert("Erreur : le backend du chatbot n'est pas joignable.");
       });
   }
 
-  // Fonction TTS côté client : lit le MP3 généré par ton backend (plus de clé AWS ici !)
-  function playMp3FromBackend(audioUrl, fallbackText) {
-    if (audioUrl) {
-      const audio = new Audio(audioUrl);
-      audio.play();
-    } else if (fallbackText) {
-      // Fallback simple avec synthèse vocale navigateur
-      if ('speechSynthesis' in window) {
-        const utter = new SpeechSynthesisUtterance(fallbackText);
-        utter.lang = 'fr-FR';
-        speechSynthesis.speak(utter);
-      }
-    }
-  }
-
-  // === Événements ===
-
-  // Bascule mode TEXTE ↔ VOCAL
-  arrowBtn.onclick = () => {
-    isTextMode = !isTextMode;
-    if (isTextMode) {
-      arrowBtn.innerHTML = '⬇︎';
-      textForm.style.display      = 'flex';
-      chatContainer.style.display = chatContainer.childElementCount ? 'block' : 'none';
-      vocalBtn.style.display      = 'none';
-      quickContainer.style.display = 'flex';
-      textInput.focus();
-    } else {
-      arrowBtn.innerHTML = '⬆︎';
-      textForm.style.display      = 'none';
-      chatContainer.style.display = 'none';
-      vocalBtn.style.display      = 'block';
-      quickContainer.style.display = 'flex';
-    }
-  };
-
-  // Cache suggestions si on tape du texte (mode texte)
-  textInput.addEventListener('input', () => {
-    if (textInput.value.trim().length > 0) {
-      quickContainer.style.display = 'none';
+  // ============ PATCH SWIPE DOWN TO CLOSE (UX mobile) ===========
+  let touchStartY = null;
+  widget.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) touchStartY = e.touches[0].clientY;
+  });
+  widget.addEventListener('touchmove', e => {
+    if (touchStartY !== null && e.touches.length === 1) {
+      const dy = e.touches[0].clientY - touchStartY;
+      if (dy > 60) { closeWidget(); touchStartY = null; }
     }
   });
+  widget.addEventListener('touchend', () => { touchStartY = null; });
 
-  // Démarrage appel vocal
-  vocalBtn.onclick = () => {
-    recognition.start();
-    vocalBtn.disabled    = true;
-    vocalBtn.textContent = '🎙️ EN ÉCOUTE';
-  };
-  recognition.onend = () => {
-    vocalBtn.disabled    = false;
-    vocalBtn.textContent = '📞 CHAT VOCAL';
-  };
+  // PATCH DIEGO : widget TOUJOURS fermé au démarrage, même si historique
+  closeWidget();
+  adaptMobile(); // pour forcer le style dès le boot
 
-  // Réception résultat reconnaissance vocale
-  recognition.onresult = e => {
-    const txt = e.results[e.results.length-1][0].transcript.trim();
-    if (isTextMode) appendMessage(txt, 'user');
-    const placeholder = appendLoadingBubble();
-    quickContainer.style.display = 'none';
-    askBot(txt).then(d => {
-      const rep = d.text?.trim()||'(Pas de réponse)';
-      if (isTextMode) {
-        placeholder.classList.remove('loading-bubble');
-        placeholder.innerHTML = rep;
-      } else {
-        if (placeholder && placeholder.parentNode) {
-          placeholder.parentNode.removeChild(placeholder);
-        }
-      }
-      playMp3FromBackend(d.audioUrl, rep);
-    });
-  };
+  updateModeUI();
 
-  // Envoi en mode texte
-  sendBtn.onclick = () => {
-    const t = textInput.value.trim();
-    if (!t) return;
-    textInput.value = '';
-    appendMessage(t, 'user');
-    const placeholder = appendLoadingBubble();
-    quickContainer.style.display = 'none';
-    askBot(t).then(d => {
-      const r = d.text?.trim()||'(Pas de réponse)';
-      placeholder.classList.remove('loading-bubble');
-      placeholder.innerHTML = r;
-      playMp3FromBackend(d.audioUrl, r);
-    });
-  };
-  textInput.addEventListener('keypress', e => {
-    if (e.key === 'Enter') sendBtn.click();
-  });
-
-  // === Styles des bulles + suggestions verticales ===
+  // === CSS ULTRA RESPONSIVE ===
   const style = document.createElement('style');
   style.textContent = `
-    .chat-bubble {
-      max-width:80%; margin:6px 0;
-      padding:10px 14px; border-radius:18px;
-      line-height:1.4; font-size:14px;
-      box-shadow:0 2px 6px rgba(0,0,0,0.1);
-      word-wrap:break-word;
+    @media (max-width: 500px) {
+      .custom-chatbot-widget {
+        width: 65vw !important;
+        max-width: 65vw !important;
+        min-width: 0 !important;
+        left: unset !important;
+        right: 2vw !important;
+        bottom: 2vw !important;
+        border-radius: 18px !important;
+        box-shadow: 0 8px 32px #0002 !important;
+        padding: 4vw 2vw 2vw 2vw !important;
+        font-size: 1.06em !important;
+        max-height: 65vh !important;
+        height: auto !important;
+        display: flex;
+        flex-direction: column !important;
+        position: fixed !important;
+        z-index: 99999 !important;
+        top: unset !important;
+      }
+      .custom-chatbot-widget h2 {
+        font-size: 1.09em !important;
+        margin-top: 0.3em !important;
+        margin-bottom: 1em !important;
+        word-break: break-word;
+        text-align: left !important;
+      }
+      .custom-chatbot-widget input {
+        font-size: 1em !important;
+      }
+      .custom-chatbot-widget .msg-fadein {
+        animation: fadeInUp 0.4s;
+      }
+      .custom-chatbot-widget {
+        overflow: auto !important;
+      }
     }
-    .chat-bubble.user{ background:#dce8ff; margin-left:auto; text-align:right }
-    .chat-bubble.bot { background:#f4f4f4; margin-right:auto; text-align:left }
-    .chat-bubble.error{ background:#ffe5e5; color:#a00; font-style:italic; padding:6px; font-size:12px }
-    /* Loader animé "..." */
-    .loading-bubble .dot-loader {
-      display: inline-block; font-size: 22px; letter-spacing: 2px;
+    .custom-chatbot-widget img { max-width: 100%; border-radius: 10px; margin-top: 6px; }
+    .custom-chatbot-widget a { color: ${config.color}; text-decoration: underline; }
+    .chatbot-loader-bubbles {
+      display: flex; align-items: center; height: 22px;
     }
-    .loading-bubble .dot-loader span {
-      opacity: 0.4;
-      animation: blink 1.2s infinite;
+    .chatbot-loader-bubbles span {
+      width: 6px; height: 6px; margin: 0 2px;
+      background: #a6b5df;
+      border-radius: 50%; display: inline-block;
+      opacity: 0.7; animation: chatbot-bounce 1s infinite both;
     }
-    .loading-bubble .dot-loader span:nth-child(2) { animation-delay: 0.2s; }
-    .loading-bubble .dot-loader span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes blink {
-      0%, 80%, 100% { opacity: 0.4; }
-      40% { opacity: 1; }
+    .chatbot-loader-bubbles span:nth-child(2) { animation-delay: 0.15s; }
+    .chatbot-loader-bubbles span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes chatbot-bounce {
+      0%, 80%, 100% { transform: scale(0.8); opacity: 0.7; }
+      40% { transform: scale(1.3); opacity: 1; }
     }
-    /* Suggestions verticales et larges */
-    .quick-btn {
-      background:#eaf4ff; color:${config.color}; border:1px solid ${config.color};
-      border-radius:22px; margin:0 0 10px 0; padding:10px 16px;
-      font-size:15px; font-weight:500; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.03);
-      transition:background 0.15s;
-      width: 100%; text-align: left;
-      outline: none;
-    }
-    .quick-btn:hover { background: #d1e7ff; }
-    .quick-btn:last-child { margin-bottom: 0; }
-    /* Responsive mobile */
-    @media (max-width: 600px) {
-      .chat-bubble, .quick-btn { font-size:13px; padding:8px 10px;}
-      .quick-btn { min-height: 38px; }
-      .mainWidget { min-width: 98vw; }
-    }
+    button:focus { outline: 2px solid #009fff77 !important; }
+    .msg-fadein { animation: fadeInUp 0.4s; }
+    @keyframes fadeInUp { from { opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
   `;
-  document.head.appendChild(style);
-
-  // Animation fade-in widget au démarrage (optionnel, UX)
-  setTimeout(() => {
-    if (!isMinimized) mainWidget.style.opacity = 1;
-  }, 100);
+  shadow.appendChild(style);
 }
