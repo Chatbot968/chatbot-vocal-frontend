@@ -188,8 +188,11 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   function sanitizeForSpeech(html) {
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
-    tmp.querySelectorAll('a, img').forEach(el => el.remove());
-    return tmp.textContent || tmp.innerText || '';
+    tmp.querySelectorAll('a').forEach(el => el.replaceWith(el.textContent));
+    tmp.querySelectorAll('img').forEach(el => el.remove());
+    let text = tmp.textContent || tmp.innerText || '';
+    text = text.replace(/https?:\/\/\S+/gi, '');
+    return text.replace(/\s+/g, ' ').trim();
   }
 
   function speakText(html) {
