@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import Réagir, { useState } depuis 'réagir';          // 1er import
+import { VERSION_WIDGET } depuis './widgetVersion';   // 2ème import
 
-const BACKEND_URL = "https://chatbot-vocal-backend.onrender.com";
-import { WIDGET_VERSION } from './widgetVersion';
-const WIDGET_URL = `https://chatbot-vocal-frontend.onrender.com/ChatbotWidget.js?v=${WIDGET_VERSION}`;
+const URL_BACKEND = "https://chatbot-vocal-backend.onrender.com";
+const URL_WIDGET = `https://chatbot-vocal-frontend.onrender.com/ChatbotWidget.js?v=${VERSION_WIDGET}`;
 
 function ConfigForm() {
   const [clientId, setClientId] = useState('');
