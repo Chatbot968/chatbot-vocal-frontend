@@ -22,11 +22,14 @@ function declareSpeechRecognition() {
     window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     window._speechDeclared = true;
   }
-  if (!window.SpeechRecognition) alert("❌ Chatbot vocal non supporté sur ce navigateur");
-  else loadAndInitChatbot();
+  const supported = !!window.SpeechRecognition;
+  if (!supported) {
+    alert("⚠️ Chatbot vocal non disponible sur ce navigateur. Mode texte uniquement.");
+  }
+  loadAndInitChatbot(supported);
 }
 
-async function loadAndInitChatbot() {
+async function loadAndInitChatbot(speechSupported) {
   const scriptTag = document.currentScript || document.querySelector('script[data-client-id]');
   const clientId = scriptTag?.getAttribute('data-client-id') || "novacorp";
   const backendUrl = scriptTag?.getAttribute('data-backend-url') || "https://chatbot-vocal-backend.onrender.com";
@@ -53,7 +56,7 @@ async function loadAndInitChatbot() {
   } catch (e) {
     showAlert("Erreur réseau : la configuration du chatbot n'a pas pu être chargée.");
   }
-  initChatbot(config, backendUrl, clientId);
+  initChatbot(config, backendUrl, clientId, speechSupported);
 }
 
 function showAlert(msg) {
@@ -75,7 +78,7 @@ function showAlert(msg) {
   setTimeout(() => { if (div.parentNode) div.parentNode.removeChild(div); }, 6500);
 }
 
-function initChatbot(config, backendUrl, clientId) {
+function initChatbot(config, backendUrl, clientId, speechSupported) {
   // Toutes les variables (comme avant)
   let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, isWidgetOpen = false;
 
@@ -164,10 +167,13 @@ function initChatbot(config, backendUrl, clientId) {
     }
   }
 
-  const recognition = new window.SpeechRecognition();
-  recognition.lang = 'fr-FR';
-  recognition.continuous = false;
-  recognition.interimResults = false;
+  let recognition = null;
+  if (speechSupported) {
+    recognition = new window.SpeechRecognition();
+    recognition.lang = 'fr-FR';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+  }
 
   const userId = localStorage.getItem('chatbotUserId') || (() => {
     const id = 'user_' + Math.random().toString(36).substr(2, 9);
@@ -463,12 +469,13 @@ function initChatbot(config, backendUrl, clientId) {
       vocalCtaBtn.style.background = "#111";
       return;
     }
+    if (!recognition) return;
     if (!isListening) recognition.start();
     else recognition.stop();
   };
 
   vocalCtaBox.appendChild(vocalCtaBtn);
-  widget.appendChild(vocalCtaBox);
+  if (speechSupported) widget.appendChild(vocalCtaBox);
 
   const footerNav = document.createElement('div');
   footerNav.style.display = 'flex';
@@ -500,6 +507,11 @@ function initChatbot(config, backendUrl, clientId) {
     updateModeUI();
   };
   function updateModeUI() {
+    if (!speechSupported) {
+      if (inputBox) inputBox.style.display = 'flex';
+      if (vocalCtaBox) vocalCtaBox.style.display = 'none';
+      return;
+    }
     if (isTextMode) {
       if (inputBox) inputBox.style.display = 'flex';
       if (sendBtn) sendBtn.style.display = 'inline-block';
@@ -512,7 +524,7 @@ function initChatbot(config, backendUrl, clientId) {
       if (vocalCtaBox) vocalCtaBox.style.display = 'flex';
     }
   }
-  footerNav.appendChild(vocalTab);
+  if (speechSupported) footerNav.appendChild(vocalTab);
   footerNav.appendChild(textTab);
   widget.appendChild(footerNav);
 
@@ -547,24 +559,26 @@ function initChatbot(config, backendUrl, clientId) {
   };
   rgpd.parentNode.insertBefore(clearHistory, rgpd.nextSibling);
 
-  recognition.onstart = () => {
-    isListening = true;
-    vocalCtaBtn.innerHTML = `<span style="font-size:1.2em;margin-right:6px;">🛑</span><b>ARRÊTER</b>`;
-    vocalCtaBtn.style.background = "#e32525";
-    vocalCtaBtn.style.color = "#fff";
-    vocalCtaBtn.style.boxShadow = "0 0 0 8px #e3252535";
-  };
-  recognition.onend = () => {
-    isListening = false;
-    vocalCtaBtn.innerHTML = `<span style="font-size:1.25em;margin-right:6px;">📞</span><b>CHAT VOCAL</b>`;
-    vocalCtaBtn.style.background = "#111";
-    vocalCtaBtn.style.color = "#fff";
-    vocalCtaBtn.style.boxShadow = "0 2px 14px #181e3625";
-  };
-  recognition.onresult = e => {
-    const txt = e.results[e.results.length - 1][0].transcript;
-    handleMessage(txt);
-  };
+  if (recognition) {
+    recognition.onstart = () => {
+      isListening = true;
+      vocalCtaBtn.innerHTML = `<span style="font-size:1.2em;margin-right:6px;">🛑</span><b>ARRÊTER</b>`;
+      vocalCtaBtn.style.background = "#e32525";
+      vocalCtaBtn.style.color = "#fff";
+      vocalCtaBtn.style.boxShadow = "0 0 0 8px #e3252535";
+    };
+    recognition.onend = () => {
+      isListening = false;
+      vocalCtaBtn.innerHTML = `<span style="font-size:1.25em;margin-right:6px;">📞</span><b>CHAT VOCAL</b>`;
+      vocalCtaBtn.style.background = "#111";
+      vocalCtaBtn.style.color = "#fff";
+      vocalCtaBtn.style.boxShadow = "0 2px 14px #181e3625";
+    };
+    recognition.onresult = e => {
+      const txt = e.results[e.results.length - 1][0].transcript;
+      handleMessage(txt);
+    };
+  }
 
   sendBtn.onclick = () => {
     if (input.value.trim()) {
