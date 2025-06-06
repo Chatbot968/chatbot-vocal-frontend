@@ -179,6 +179,20 @@ function initChatbot(config, backendUrl, clientId) {
   let isListening = false;
   let currentAudio = null;
 
+  function sanitizeForSpeech(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    tmp.querySelectorAll('a, img').forEach(el => el.remove());
+    return tmp.textContent || tmp.innerText || '';
+  }
+
+  function speakText(html) {
+    if (!window.speechSynthesis) return;
+    const text = sanitizeForSpeech(html);
+    const utterance = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(utterance);
+  }
+
   // --- GESTION DE L'HISTORIQUE & DE L'OUVERTURE CHAT ---
   let chatHistory = [];
   try {
@@ -625,6 +639,7 @@ function initChatbot(config, backendUrl, clientId) {
     msgRow.appendChild(div);
     chatLog.appendChild(msgRow);
     chatLog.scrollTop = chatLog.scrollHeight;
+    return msgRow;
   }
 
   function renderHistory() {
@@ -663,17 +678,34 @@ function initChatbot(config, backendUrl, clientId) {
       .then(r => r.json())
       .then(data => {
         hideLoader();
-        appendMessage(data.text || '(Pas de réponse)', 'bot', true);
+        const msgEl = appendMessage(data.text || '(Pas de réponse)', 'bot', true);
         chatHistory.push({ msg: data.text || '(Pas de réponse)', sender: 'bot', isHTML: true });
         localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
         if (!isTextMode) {
           if (data.audioUrl) {
             currentAudio = new Audio(data.audioUrl);
-            currentAudio.play();
+            currentAudio.play().catch(err => {
+              console.error('Erreur lecture audio:', err);
+              showAlert('Erreur lecture audio: ' + err.message);
+              const playBtn = document.createElement('button');
+              playBtn.textContent = 'Écouter la réponse';
+              playBtn.style.marginLeft = '8px';
+              playBtn.onclick = () => {
+                playBtn.disabled = true;
+                currentAudio.play().catch(e => {
+                  console.error('Erreur lecture audio:', e);
+                  showAlert('Erreur lecture audio: ' + e.message);
+                  speakText(data.text || '');
+                });
+              };
+              msgEl.appendChild(playBtn);
+              speakText(data.text || '');
+            });
           } else {
             appendMessage("(Réponse vocale indisponible pour ce message)", 'bot');
             chatHistory.push({ msg: "(Réponse vocale indisponible pour ce message)", sender: 'bot', isHTML: false });
             localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
+            speakText(data.text || '');
           }
         }
       })
@@ -745,8 +777,12 @@ function initChatbot(config, backendUrl, clientId) {
         overflow: auto !important;
       }
     }
-    .custom-chatbot-widget img { max-width: 100%; border-radius: 10px; margin-top: 6px; }
-    .custom-chatbot-widget a { color: ${config.color}; text-decoration: underline; }
+    .custom-chatbot-widget img { max-width: 100%; border-radius: 10px; margin-top: 6px; display: block; }
+    .custom-chatbot-widget a {
+      color: ${config.color};
+      text-decoration: underline;
+      font-size: 0.95em;
+    }
     .chatbot-loader-bubbles {
       display: flex; align-items: center; height: 22px;
     }
