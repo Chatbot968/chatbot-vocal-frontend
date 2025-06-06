@@ -646,7 +646,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (isHTML && sender === 'bot' && window.marked && window.DOMPurify) {
       const html = marked.parse(msg);
       div.innerHTML = DOMPurify.sanitize(html, {
-        ALLOWED_TAGS: ['b', 'i', 'strong', 'a', 'img', 'br', 'ul', 'li', 'p'],
+        ALLOWED_TAGS: ['b', 'i', 'strong', 'a', 'img', 'br', 'ul', 'li', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'em', 'ol', 'blockquote'],
         ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'target']
       });
     } else {
@@ -787,6 +787,29 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       color: ${config.color};
       text-decoration: underline;
       font-size: 0.95em;
+    }
+    .custom-chatbot-widget h1,
+    .custom-chatbot-widget h2,
+    .custom-chatbot-widget h3,
+    .custom-chatbot-widget h4,
+    .custom-chatbot-widget h5,
+    .custom-chatbot-widget h6 {
+      margin: 0.4em 0;
+      font-size: 1.1em;
+    }
+    .custom-chatbot-widget p {
+      margin: 0.4em 0;
+    }
+    .custom-chatbot-widget ul,
+    .custom-chatbot-widget ol {
+      margin: 0.4em 0 0.4em 1.2em;
+      padding-left: 1em;
+    }
+    .custom-chatbot-widget blockquote {
+      margin: 0.4em 0;
+      padding-left: 0.8em;
+      border-left: 3px solid #ccc;
+      color: #555;
     }
     .chatbot-loader-bubbles {
       display: flex; align-items: center; height: 22px;
