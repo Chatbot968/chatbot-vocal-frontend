@@ -1,8 +1,8 @@
 import React, { useState } from 'react';        // 1er import
-import { VERSION_WIDGET } from './widgetVersion';   // 2ème import
+import { WIDGET_VERSION } from './widgetVersion';   // 2ème import
 
 const URL_BACKEND = "https://chatbot-vocal-backend.onrender.com";
-const URL_WIDGET = `https://chatbot-vocal-frontend.onrender.com/ChatbotWidget.js?v=${VERSION_WIDGET}`;
+const URL_WIDGET = `https://chatbot-vocal-frontend.onrender.com/ChatbotWidget.js?v=${WIDGET_VERSION}`;
 
 function ConfigForm() {
   const [clientId, setClientId] = useState('');
@@ -26,7 +26,7 @@ function ConfigForm() {
       rgpdLink,
     };
     try {
-      await fetch(`${BACKEND_URL}/api/create-config`, {
+      await fetch(`${URL_BACKEND}/api/create-config`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
