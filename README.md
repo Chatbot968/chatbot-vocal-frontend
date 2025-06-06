@@ -68,3 +68,12 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+## Deployment Notes
+
+The production site is hosted on [Render](https://render.com/) as a static site. Render reads `public/static.json` during deployment to apply HTTP headers. The file configures `Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0` so browsers always fetch the latest files.
+
+## Troubleshooting
+
+If you encounter layout glitches or see an outdated version of the site, clear your browser cache and reload the page. Mobile browsers in particular tend to cache aggressively, so clearing the cache on your phone often resolves layout problems.
+
