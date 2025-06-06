@@ -718,18 +718,7 @@ function initChatbot(config, backendUrl, clientId) {
       });
   }
 
-  // ============ PATCH SWIPE DOWN TO CLOSE (UX mobile) ===========
-  let touchStartY = null;
-  widget.addEventListener('touchstart', e => {
-    if (e.touches.length === 1) touchStartY = e.touches[0].clientY;
-  });
-  widget.addEventListener('touchmove', e => {
-    if (touchStartY !== null && e.touches.length === 1) {
-      const dy = e.touches[0].clientY - touchStartY;
-      if (dy > 60) { closeWidget(); touchStartY = null; }
-    }
-  });
-  widget.addEventListener('touchend', () => { touchStartY = null; });
+
 
   // PATCH DIEGO : widget TOUJOURS fermé au démarrage, même si historique
   closeWidget();
