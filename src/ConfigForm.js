@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 
 const BACKEND_URL = "https://chatbot-vocal-backend.onrender.com";
-const WIDGET_URL = "https://chatbot-vocal-frontend.onrender.com/ChatbotWidget.js";
+import { WIDGET_VERSION } from './widgetVersion';
+const WIDGET_URL = `https://chatbot-vocal-frontend.onrender.com/ChatbotWidget.js?v=${WIDGET_VERSION}`;
 
 function ConfigForm() {
   const [clientId, setClientId] = useState('');
