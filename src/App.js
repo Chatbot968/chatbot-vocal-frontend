@@ -1,13 +1,14 @@
 import React, { useEffect } from "react";
 import "./App.css";
 import ConfigForm from "./ConfigForm";
+import { WIDGET_VERSION } from "./widgetVersion";
 
 function App() {
   useEffect(() => {
     // Définis ici l'ID du client et l'URL du backend
     const CLIENT_ID = "novacorp"; // ← L'ID pour charger config/novacorp.json
     const BACKEND_URL = "https://chatbot-vocal-backend.onrender.com";
-    const FRONTEND_WIDGET_URL = "https://chatbot-vocal-frontend.onrender.com/ChatbotWidget.js";
+    const FRONTEND_WIDGET_URL = `https://chatbot-vocal-frontend.onrender.com/ChatbotWidget.js?v=${WIDGET_VERSION}`;
     
     // Injecte dynamiquement le widget chatbot vocal
     const script = document.createElement('script');
