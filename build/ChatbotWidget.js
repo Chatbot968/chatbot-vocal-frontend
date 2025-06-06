@@ -407,6 +407,13 @@ function initChatbot(config, backendUrl, clientId) {
     minHeight: '44px'
   });
 
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && input.value.trim()) {
+      handleMessage(input.value);
+      input.value = '';
+    }
+  });
+
   const sendBtn = document.createElement('button');
   sendBtn.textContent = '➤';
   Object.assign(sendBtn.style, {
@@ -567,10 +574,6 @@ function initChatbot(config, backendUrl, clientId) {
   document.addEventListener('keydown', (e) => {
     if (e.key === "Escape" && isWidgetOpen) {
       closeWidget();
-    }
-    if (e.key === "Enter" && isTextMode && document.activeElement === input && input.value.trim()) {
-      handleMessage(input.value);
-      input.value = '';
     }
   });
 
