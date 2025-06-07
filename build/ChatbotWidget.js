@@ -428,9 +428,10 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   chatLog.style.transition = 'max-height 0.25s cubic-bezier(0.4,0.3,0.6,1)';
   chatLog.style.display = hasOpenedChat ? '' : 'none';
 
-  const sizeToggleBtn = document.createElement('button');
-  sizeToggleBtn.textContent = '🗖';
-  Object.assign(sizeToggleBtn.style, {
+  // === Ajoute les boutons d'agrandissement/réduction dans le chatLog ===
+  const expandBtn = document.createElement('button');
+  expandBtn.innerHTML = '🗖';
+  Object.assign(expandBtn.style, {
     position: 'absolute',
     top: '8px',
     right: '10px',
@@ -441,13 +442,27 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     cursor: 'pointer',
     zIndex: '10'
   });
+  chatLog.appendChild(expandBtn);
 
-
+  const reduceBtn = document.createElement('button');
+  reduceBtn.innerHTML = '🗕'; // icône différente pour réduire
+  Object.assign(reduceBtn.style, {
+    position: 'absolute',
+    top: '8px',
+    right: '10px',
+    background: '#fff',
+    border: 'none',
+    color: '#888',
+    fontSize: '18px',
+    cursor: 'pointer',
+    zIndex: '10',
+    display: 'none'
+  });
+  chatLog.appendChild(reduceBtn);
 
   let isExpanded = false;
   expandBtn.onclick = () => {
     isExpanded = true;
-    widget.classList.add('expanded');
     if (chatLog) {
       chatLog.style.maxHeight = '74vh';
       chatLog.style.minHeight = '320px';
@@ -455,11 +470,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     expandBtn.style.display = 'none';
     reduceBtn.style.display = 'inline-block';
     if (widget) widget.style.maxHeight = '85vh';
-    adaptMobile();
   };
   reduceBtn.onclick = () => {
     isExpanded = false;
-    widget.classList.remove('expanded');
     if (chatLog) {
       chatLog.style.maxHeight = '160px';
       chatLog.style.minHeight = '';
@@ -467,7 +480,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     expandBtn.style.display = 'inline-block';
     reduceBtn.style.display = 'none';
     if (widget) widget.style.maxHeight = '90vh';
-    adaptMobile();
 
   };
 
