@@ -348,43 +348,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   });
   closeBtn.onclick = closeWidget;
   header.appendChild(closeBtn);
-
-  // === BOUTON AGRANDIR/RÉDUIRE ===
-  const expandBtn = document.createElement('button');
-  expandBtn.innerHTML = '🗖'; // Icône agrandir au départ
-  expandBtn.title = 'Agrandir';
-
-  Object.assign(expandBtn.style, {
-    border: 'none',
-    background: 'none',
-    fontSize: '22px',
-    color: '#fff',
-    cursor: 'pointer',
-    marginLeft: '12px'
-  });
-
-  // header.appendChild(expandBtn); // à droite
-  header.insertBefore(expandBtn, closeBtn); // à gauche de la croix
-
-  let isExpanded = false;
-  expandBtn.onclick = () => {
-    isExpanded = !isExpanded;
-    if (isExpanded) {
-      widget.style.width = '520px';
-      widget.style.maxWidth = '98vw';
-      widget.style.maxHeight = '94vh';
-      expandBtn.innerHTML = '🗕';
-      expandBtn.title = 'Réduire';
-      widget.classList.add('expanded');
-    } else {
-      widget.style.width = '350px';
-      widget.style.maxWidth = '90vw';
-      widget.style.maxHeight = '90vh';
-      expandBtn.innerHTML = '🗖';
-      expandBtn.title = 'Agrandir';
-      widget.classList.remove('expanded');
-    }
-  };
   widget.appendChild(header);
 
   function getWelcomeMsg() {
@@ -427,6 +390,68 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   chatLog.style.position = 'relative';
   chatLog.style.transition = 'max-height 0.25s cubic-bezier(0.4,0.3,0.6,1)';
   chatLog.style.display = hasOpenedChat ? '' : 'none';
+
+  // === Boutons agrandir/réduire ===
+  const expandBtn = document.createElement('button');
+  expandBtn.innerHTML = '🗖';
+  expandBtn.title = 'Agrandir';
+  Object.assign(expandBtn.style, {
+    position: 'absolute',
+    top: '8px',
+    right: '10px',
+    background: '#fff',
+    border: 'none',
+    color: '#888',
+    fontSize: '18px',
+    cursor: 'pointer',
+    zIndex: '10',
+    padding: '2px 6px',
+    borderRadius: '6px'
+  });
+  chatLog.appendChild(expandBtn);
+
+  const reduceBtn = document.createElement('button');
+  reduceBtn.innerHTML = '🗕';
+  reduceBtn.title = 'Réduire';
+  Object.assign(reduceBtn.style, {
+    position: 'absolute',
+    top: '8px',
+    right: '10px',
+    background: '#fff',
+    border: 'none',
+    color: '#888',
+    fontSize: '18px',
+    cursor: 'pointer',
+    zIndex: '10',
+    padding: '2px 6px',
+    borderRadius: '6px',
+    display: 'none'
+  });
+  chatLog.appendChild(reduceBtn);
+
+  let isExpanded = false;
+  expandBtn.onclick = () => {
+    isExpanded = true;
+    if (chatLog) {
+      chatLog.style.maxHeight = '74vh';
+      chatLog.style.minHeight = '320px';
+      chatLog.style.width = '';
+    }
+    expandBtn.style.display = 'none';
+    reduceBtn.style.display = 'inline-block';
+    if (widget) widget.style.maxHeight = '85vh';
+  };
+  reduceBtn.onclick = () => {
+    isExpanded = false;
+    if (chatLog) {
+      chatLog.style.maxHeight = '160px';
+      chatLog.style.minHeight = '';
+      chatLog.style.width = '';
+    }
+    expandBtn.style.display = 'inline-block';
+    reduceBtn.style.display = 'none';
+    if (widget) widget.style.maxHeight = '90vh';
+  };
 
 
   widget.appendChild(chatLog);
