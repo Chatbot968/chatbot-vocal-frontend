@@ -221,6 +221,14 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     window.speechSynthesis.speak(utterance);
   }
 
+  function htmlToMarkdown(html) {
+    if (window.TurndownService) {
+      const t = new window.TurndownService();
+      return t.turndown(html);
+    }
+    return html;
+  }
+
   // --- GESTION DE L'HISTORIQUE & DE L'OUVERTURE CHAT ---
   let chatHistory = [];
   try {
@@ -694,8 +702,12 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       .then(r => r.json())
       .then(data => {
         hideLoader();
-        const msgEl = appendMessage(data.text || '(Pas de réponse)', 'bot', true);
-        chatHistory.push({ msg: data.text || '(Pas de réponse)', sender: 'bot', isHTML: true });
+        let text = data.text || '(Pas de réponse)';
+        if (/<[a-z][\s\S]*>/i.test(text)) {
+          text = htmlToMarkdown(text);
+        }
+        const msgEl = appendMessage(text, 'bot', true);
+        chatHistory.push({ msg: text, sender: 'bot', isHTML: true });
         localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
         if (!isTextMode) {
           if (data.audioUrl) {
