@@ -515,7 +515,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   widget.appendChild(inputBox);
 
   vocalCtaBox = document.createElement('div');
-  vocalCtaBox.style.display = hasOpenedChat ? 'none' : 'none';
+  vocalCtaBox.style.display = hasOpenedChat ? 'none' : 'flex';
   vocalCtaBox.style.justifyContent = 'center';
   vocalCtaBox.style.alignItems = 'center';
   vocalCtaBox.style.margin = '12px 0 0 0';
