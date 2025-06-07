@@ -96,7 +96,7 @@ function showAlert(msg) {
 
 function initChatbot(config, backendUrl, clientId, speechSupported) {
   // Toutes les variables (comme avant)
-  let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, isWidgetOpen = false;
+  let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, sizeToggleBtn, isWidgetOpen = false;
 
   // -------- PATCH ADAPT MOBILE 65vw/65vh -----------
   function adaptMobile() {
@@ -147,6 +147,10 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
     isWidgetOpen = false;
+    if (widget) {
+      widget.classList.remove('expanded');
+    }
+    if (sizeToggleBtn) sizeToggleBtn.textContent = '🗖';
     if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
     if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
@@ -344,7 +348,25 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer', zIndex: '100001'
   });
   closeBtn.onclick = closeWidget;
-  header.appendChild(closeBtn);
+
+  sizeToggleBtn = document.createElement('button');
+  sizeToggleBtn.textContent = '🗖';
+  Object.assign(sizeToggleBtn.style, {
+    border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer'
+  });
+  sizeToggleBtn.onclick = () => {
+    const expanded = widget.classList.toggle('expanded');
+    sizeToggleBtn.textContent = expanded ? '✕' : '🗖';
+    if (expanded && chatLog) chatLog.scrollTop = chatLog.scrollHeight;
+  };
+
+  const btnWrap = document.createElement('div');
+  btnWrap.style.display = 'flex';
+  btnWrap.style.alignItems = 'center';
+  btnWrap.style.gap = '6px';
+  btnWrap.appendChild(sizeToggleBtn);
+  btnWrap.appendChild(closeBtn);
+  header.appendChild(btnWrap);
   widget.appendChild(header);
 
   function getWelcomeMsg() {
@@ -387,59 +409,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   chatLog.style.position = 'relative';
   chatLog.style.transition = 'max-height 0.25s cubic-bezier(0.4,0.3,0.6,1)';
   chatLog.style.display = hasOpenedChat ? '' : 'none';
-
-  const expandBtn = document.createElement('button');
-  expandBtn.innerHTML = '🗖';
-  Object.assign(expandBtn.style, {
-    position: 'absolute',
-    top: '8px',
-    right: '10px',
-    background: '#fff',
-    border: 'none',
-    color: '#888',
-    fontSize: '18px',
-    cursor: 'pointer',
-    zIndex: '10'
-  });
-  chatLog.appendChild(expandBtn);
-
-  const reduceBtn = document.createElement('button');
-  reduceBtn.textContent = '✕';
-  Object.assign(reduceBtn.style, {
-    position: 'absolute',
-    top: '8px',
-    right: '10px',
-    background: '#fff',
-    border: 'none',
-    color: '#888',
-    fontSize: '20px',
-    cursor: 'pointer',
-    zIndex: '10',
-    display: 'none'
-  });
-  chatLog.appendChild(reduceBtn);
-
-  let isExpanded = false;
-  expandBtn.onclick = () => {
-    isExpanded = true;
-    if (chatLog) {
-      chatLog.style.maxHeight = '74vh';
-      chatLog.style.minHeight = '320px';
-    }
-    expandBtn.style.display = 'none';
-    reduceBtn.style.display = 'inline-block';
-    if (widget) widget.style.maxHeight = '85vh';
-  };
-  reduceBtn.onclick = () => {
-    isExpanded = false;
-    if (chatLog) {
-      chatLog.style.maxHeight = '160px';
-      chatLog.style.minHeight = '';
-    }
-    expandBtn.style.display = 'inline-block';
-    reduceBtn.style.display = 'none';
-    if (widget) widget.style.maxHeight = '90vh';
-  };
+  chatLog.classList.add('chat-log');
 
   widget.appendChild(chatLog);
 
@@ -852,6 +822,15 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       padding-left: 0.8em;
       border-left: 3px solid #ccc;
       color: #555;
+    }
+    .custom-chatbot-widget .chat-log {
+      transition: max-height 0.25s cubic-bezier(0.4,0.3,0.6,1);
+    }
+    .custom-chatbot-widget.expanded {
+      max-height: 85vh !important;
+    }
+    .custom-chatbot-widget.expanded .chat-log {
+      max-height: 74vh !important;
     }
     .chatbot-loader-bubbles {
       display: flex; align-items: center; height: 22px;
