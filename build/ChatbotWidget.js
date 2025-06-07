@@ -5,7 +5,7 @@ if (window.__CHATBOT_WIDGET_LOADED__) {
 }
 window.__CHATBOT_WIDGET_LOADED__ = true;
 
-window.CHATBOT_WIDGET_VERSION = 'v10 - ' + new Date().toISOString();
+window.CHATBOT_WIDGET_VERSION = 'v11 - ' + new Date().toISOString();
 console.log('🟢 [ChatbotWidget] Version chargée :', window.CHATBOT_WIDGET_VERSION);
 
 (function() {
@@ -188,15 +188,20 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   function sanitizeForSpeech(html) {
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
-    tmp.querySelectorAll('a').forEach(el => el.replaceWith(el.textContent));
-    tmp.querySelectorAll('img').forEach(el => el.remove());
-    const text = tmp.textContent || tmp.innerText || '';
-    return text.replace(/https?:\/\/\S+/g, '').trim();
+tmp.querySelectorAll('a').forEach(a => {
+  const txt = document.createTextNode(a.textContent);
+  a.parentNode && a.parentNode.replaceChild(txt, a);
+});
+tmp.querySelectorAll('img').forEach(el => el.remove());
+let texte = tmp.textContent || tmp.innerText || '';
+texte = texte.replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim();
+return texte;main
   }
 
   function speakText(html) {
     if (!window.speechSynthesis) return;
-    const text = sanitizeForSpeech(html);
+    const product = extractProductSentence(html);
+    const text = product || sanitizeForSpeech(html);
     const utterance = new SpeechSynthesisUtterance(text);
     window.speechSynthesis.speak(utterance);
   }
@@ -626,8 +631,17 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (isHTML && sender === 'bot' && window.marked && window.DOMPurify) {
       const html = marked.parse(msg);
       div.innerHTML = DOMPurify.sanitize(html, {
-        ALLOWED_TAGS: ['b', 'i', 'strong', 'a', 'img', 'br', 'ul', 'li', 'p'],
+        ALLOWED_TAGS: ['b', 'i', 'strong', 'a', 'img', 'br', 'ul', 'li', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'em', 'ol', 'blockquote'],
         ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'target']
+      });
+      div.querySelectorAll('a').forEach(a => {
+        a.style.background = config.color;
+        a.style.color = '#fff';
+        a.style.padding = '6px 10px';
+        a.style.borderRadius = '8px';
+        a.style.display = 'inline-block';
+        a.style.textDecoration = 'none';
+        a.style.marginTop = '4px';
       });
     } else {
       div.textContent = msg;
@@ -764,9 +778,37 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     }
     .custom-chatbot-widget img { max-width: 100%; border-radius: 10px; margin-top: 6px; display: block; }
     .custom-chatbot-widget a {
-      color: ${config.color};
-      text-decoration: underline;
+      display: inline-block;
+      background: ${config.color};
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 8px;
+      text-decoration: none;
       font-size: 0.95em;
+      margin-top: 4px;
+    }
+    .custom-chatbot-widget h1,
+    .custom-chatbot-widget h2,
+    .custom-chatbot-widget h3,
+    .custom-chatbot-widget h4,
+    .custom-chatbot-widget h5,
+    .custom-chatbot-widget h6 {
+      margin: 0.4em 0;
+      font-size: 1.1em;
+    }
+    .custom-chatbot-widget p {
+      margin: 0.4em 0;
+    }
+    .custom-chatbot-widget ul,
+    .custom-chatbot-widget ol {
+      margin: 0.4em 0 0.4em 1.2em;
+      padding-left: 1em;
+    }
+    .custom-chatbot-widget blockquote {
+      margin: 0.4em 0;
+      padding-left: 0.8em;
+      border-left: 3px solid #ccc;
+      color: #555;
     }
     .chatbot-loader-bubbles {
       display: flex; align-items: center; height: 22px;
