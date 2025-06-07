@@ -43,5 +43,10 @@
   "devDependencies": {
     "concurrently": "^9.1.2",
     "dompurify": "^3.2.6"
+  },
+  "jest": {
+    "transformIgnorePatterns": [
+      "node_modules/(?!(react-markdown)/)"
+    ]
   }
 }

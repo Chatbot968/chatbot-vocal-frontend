@@ -15,6 +15,9 @@ console.log('🟢 [ChatbotWidget] Version chargée :', window.CHATBOT_WIDGET_VER
   oldAlerts.forEach(el => el.parentNode && el.parentNode.removeChild(el));
 })();
 
+function ChatMessage(_ref){var markdown=_ref.markdown;return React.createElement(window.ReactMarkdown,{components:{a:function(props){return React.createElement("a",Object.assign({},props,{target:"_blank",rel:"noopener noreferrer"}))},img:function(props){return React.createElement("img",props);}},children:markdown});}
+window.ChatMessage=ChatMessage;
+
 declareSpeechRecognition();
 
 function declareSpeechRecognition() {
@@ -643,7 +646,11 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     div.style.maxWidth = '85%';
     div.style.overflowWrap = 'break-word';
     div.style.fontSize = "1em";
-    if (isHTML && sender === 'bot' && window.marked && window.DOMPurify) {
+    if (isHTML && sender === 'bot' && window.React && window.ReactDOM && window.ReactMarkdown) {
+      ReactDOM.createRoot(div).render(
+        React.createElement(ChatMessage, { markdown: msg })
+      );
+    } else if (isHTML && sender === 'bot' && window.marked && window.DOMPurify) {
       const html = marked.parse(msg);
       div.innerHTML = DOMPurify.sanitize(html, {
         ALLOWED_TAGS: ['b', 'i', 'strong', 'a', 'img', 'br', 'ul', 'li', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'em', 'ol', 'blockquote'],
