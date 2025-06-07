@@ -122,8 +122,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       container.style.height = "";
       document.body.style.overflow = '';
     } else {
-      widget.style.width = "350px";
+      widget.style.width = '';
       widget.style.maxWidth = "90vw";
+      widget.style.maxHeight = '';
       widget.style.borderRadius = "20px";
       widget.style.left = "";
       widget.style.right = "20px";
@@ -131,7 +132,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       widget.style.bottom = "calc(20px + env(safe-area-inset-bottom))";
       widget.style.position = "fixed";
       widget.style.height = "auto";
-      widget.style.maxHeight = "90vh";
       container.style.position = "fixed";
       container.style.left = "";
       container.style.right = "20px";
@@ -278,10 +278,11 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   widget = document.createElement('div');
   Object.assign(widget.style, {
     display: 'none',
-    flexDirection: 'column', width: '350px', maxWidth: '90vw',
+    flexDirection: 'column',
+    maxWidth: '90vw',
     background: `linear-gradient(to bottom, ${config.color}, #d7dcfa)`,
     color: '#000', borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-    padding: '20px', fontFamily: 'sans-serif', maxHeight: '90vh', overflow: 'hidden'
+    padding: '20px', fontFamily: 'sans-serif', overflow: 'hidden'
   });
   widget.classList.add('custom-chatbot-widget');
   shadow.appendChild(widget);
@@ -377,6 +378,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   widget.appendChild(suggBox);
 
   chatLog = document.createElement('div');
+  chatLog.classList.add('chat-log');
   chatLog.style.flex = '1';
   chatLog.style.overflowY = 'auto';
   chatLog.style.maxHeight = '160px';
@@ -423,12 +425,12 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   expandBtn.onclick = () => {
     isExpanded = true;
     if (chatLog) {
-      chatLog.style.maxHeight = '74vh';
+      chatLog.style.maxHeight = '88vh';
       chatLog.style.minHeight = '320px';
     }
     expandBtn.style.display = 'none';
     reduceBtn.style.display = 'inline-block';
-    if (widget) widget.style.maxHeight = '85vh';
+    widget.classList.add('expanded');
   };
   reduceBtn.onclick = () => {
     isExpanded = false;
@@ -438,7 +440,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     }
     expandBtn.style.display = 'inline-block';
     reduceBtn.style.display = 'none';
-    if (widget) widget.style.maxHeight = '90vh';
+    widget.classList.remove('expanded');
   };
 
   widget.appendChild(chatLog);
@@ -818,6 +820,17 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       .custom-chatbot-widget {
         overflow: auto !important;
       }
+    }
+    .custom-chatbot-widget {
+      width: 350px;
+      max-height: 90vh;
+    }
+    .custom-chatbot-widget.expanded {
+      width: 520px;
+      max-height: 94vh;
+    }
+    .custom-chatbot-widget.expanded .chat-log {
+      max-height: 88vh;
     }
     .custom-chatbot-widget img { max-width: 100%; border-radius: 10px; margin-top: 6px; display: block; }
     .custom-chatbot-widget a {
