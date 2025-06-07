@@ -8,6 +8,22 @@ window.__CHATBOT_WIDGET_LOADED__ = true;
 window.CHATBOT_WIDGET_VERSION = 'v11 - ' + new Date().toISOString();
 console.log('🟢 [ChatbotWidget] Version chargée :', window.CHATBOT_WIDGET_VERSION);
 
+function loadScript(src) {
+  return new Promise(res => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => res();
+    document.head.appendChild(s);
+  });
+}
+
+function ensureMarkdownDeps() {
+  const tasks = [];
+  if (!window.marked) tasks.push(loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js'));
+  if (!window.DOMPurify) tasks.push(loadScript('https://cdn.jsdelivr.net/npm/dompurify@3.0.3/dist/purify.min.js'));
+  return Promise.all(tasks);
+}
+
 (function() {
   const allContainers = document.querySelectorAll('div[style*="z-index: 9999"]');
   allContainers.forEach(el => el.parentNode && el.parentNode.removeChild(el));
@@ -18,7 +34,7 @@ console.log('🟢 [ChatbotWidget] Version chargée :', window.CHATBOT_WIDGET_VER
 function ChatMessage(_ref){var markdown=_ref.markdown;return React.createElement(window.ReactMarkdown,{components:{a:function(props){return React.createElement("a",Object.assign({},props,{target:"_blank",rel:"noopener noreferrer"}))},img:function(props){return React.createElement("img",props);}},children:markdown});}
 window.ChatMessage=ChatMessage;
 
-declareSpeechRecognition();
+ensureMarkdownDeps().then(declareSpeechRecognition);
 
 function declareSpeechRecognition() {
   if (!window._speechDeclared) {
@@ -863,5 +879,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     .msg-fadein { animation: fadeInUp 0.4s; }
     @keyframes fadeInUp { from { opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
   `;
+  const demoMsg = '# Exemple de markdown\n\n**Bienvenue** sur le *chatbot*.\n\n- Premier\n- Deuxième\n\n![Image](https://via.placeholder.com/150)\n\n[Visiter le site](https://example.com)';
+  appendMessage(demoMsg, 'bot', true);
   shadow.appendChild(style);
 }
