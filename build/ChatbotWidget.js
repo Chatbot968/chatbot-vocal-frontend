@@ -147,10 +147,14 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
     isWidgetOpen = false;
-    if (widget) {
-      widget.classList.remove('expanded');
+
+    expanded = false;
+    if (typeof sizeToggleBtn !== "undefined" && sizeToggleBtn) sizeToggleBtn.textContent = '🗖';
+    if (typeof chatLog !== "undefined" && chatLog) {
+      chatLog.style.maxHeight = '160px';
+      chatLog.style.minHeight = '';
     }
-    if (sizeToggleBtn) sizeToggleBtn.textContent = '🗖';
+    if (typeof widget !== "undefined" && widget) widget.style.maxHeight = '90vh';
     if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
     if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
@@ -177,6 +181,13 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     isWidgetOpen = false;
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
+    expanded = false;
+    if (typeof sizeToggleBtn !== "undefined" && sizeToggleBtn) sizeToggleBtn.textContent = '🗖';
+    if (typeof chatLog !== "undefined" && chatLog) {
+      chatLog.style.maxHeight = '160px';
+      chatLog.style.minHeight = '';
+    }
+    if (typeof widget !== "undefined" && widget) widget.style.maxHeight = '90vh';
     if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
     if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
@@ -409,7 +420,42 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   chatLog.style.position = 'relative';
   chatLog.style.transition = 'max-height 0.25s cubic-bezier(0.4,0.3,0.6,1)';
   chatLog.style.display = hasOpenedChat ? '' : 'none';
-  chatLog.classList.add('chat-log');
+
+  const sizeToggleBtn = document.createElement('button');
+  sizeToggleBtn.textContent = '🗖';
+  Object.assign(sizeToggleBtn.style, {
+    position: 'absolute',
+    top: '8px',
+    right: '10px',
+    background: '#fff',
+    border: 'none',
+    color: '#888',
+    fontSize: '18px',
+    cursor: 'pointer',
+    zIndex: '10'
+  });
+  chatLog.appendChild(sizeToggleBtn);
+
+  let expanded = false;
+  sizeToggleBtn.onclick = () => {
+    expanded = !expanded;
+    if (expanded) {
+      if (chatLog) {
+        chatLog.style.maxHeight = '74vh';
+        chatLog.style.minHeight = '320px';
+      }
+      if (widget) widget.style.maxHeight = '85vh';
+      sizeToggleBtn.textContent = '🗕';
+    } else {
+      if (chatLog) {
+        chatLog.style.maxHeight = '160px';
+        chatLog.style.minHeight = '';
+      }
+      if (widget) widget.style.maxHeight = '90vh';
+      sizeToggleBtn.textContent = '🗖';
+    }
+  };
+
 
   widget.appendChild(chatLog);
 
