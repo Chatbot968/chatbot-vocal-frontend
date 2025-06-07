@@ -136,6 +136,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       widget.style.height = "auto";
 
 
+      widget.style.maxHeight = "90vh";
+
+
       container.style.position = "fixed";
       container.style.left = "";
       container.style.right = "20px";
@@ -152,6 +155,8 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
     isWidgetOpen = false;
 
+
+    if (typeof sizeToggleBtn !== "undefined" && sizeToggleBtn) sizeToggleBtn.textContent = '🗖';
     if (typeof chatLog !== "undefined" && chatLog) {
       chatLog.style.maxHeight = '160px';
       chatLog.style.minHeight = '';
@@ -183,6 +188,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     isWidgetOpen = false;
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
+    if (typeof sizeToggleBtn !== "undefined" && sizeToggleBtn) sizeToggleBtn.textContent = '🗖';
     if (typeof chatLog !== "undefined" && chatLog) {
       chatLog.style.maxHeight = '160px';
       chatLog.style.minHeight = '';
@@ -506,7 +512,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   widget.appendChild(inputBox);
 
   vocalCtaBox = document.createElement('div');
-  vocalCtaBox.style.display = hasOpenedChat ? 'none' : 'none';
+  vocalCtaBox.style.display = hasOpenedChat ? 'none' : 'flex';
   vocalCtaBox.style.justifyContent = 'center';
   vocalCtaBox.style.alignItems = 'center';
   vocalCtaBox.style.margin = '12px 0 0 0';
