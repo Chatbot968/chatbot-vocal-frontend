@@ -122,9 +122,11 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       container.style.height = "";
       document.body.style.overflow = '';
     } else {
+
       widget.style.width = '';
       widget.style.maxWidth = "90vw";
       widget.style.maxHeight = '';
+
       widget.style.borderRadius = "20px";
       widget.style.left = "";
       widget.style.right = "20px";
@@ -132,6 +134,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       widget.style.bottom = "calc(20px + env(safe-area-inset-bottom))";
       widget.style.position = "fixed";
       widget.style.height = "auto";
+
+      widget.style.maxHeight = expanded ? "94vh" : "90vh";
+
       container.style.position = "fixed";
       container.style.left = "";
       container.style.right = "20px";
@@ -438,26 +443,32 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   });
 
 
-  chatLog.appendChild(sizeToggleBtn);
 
-  let expanded = false;
-  sizeToggleBtn.onclick = () => {
-    expanded = !expanded;
-    if (expanded) {
-      if (chatLog) {
-        chatLog.style.maxHeight = '74vh';
-        chatLog.style.minHeight = '320px';
-      }
-      if (widget) widget.style.maxHeight = '85vh';
-      sizeToggleBtn.textContent = '🗕';
-    } else {
-      if (chatLog) {
-        chatLog.style.maxHeight = '160px';
-        chatLog.style.minHeight = '';
-      }
-      if (widget) widget.style.maxHeight = '90vh';
-      sizeToggleBtn.textContent = '🗖';
+  let isExpanded = false;
+  expandBtn.onclick = () => {
+    isExpanded = true;
+    widget.classList.add('expanded');
+    if (chatLog) {
+      chatLog.style.maxHeight = '74vh';
+      chatLog.style.minHeight = '320px';
     }
+    expandBtn.style.display = 'none';
+    reduceBtn.style.display = 'inline-block';
+    if (widget) widget.style.maxHeight = '85vh';
+    adaptMobile();
+  };
+  reduceBtn.onclick = () => {
+    isExpanded = false;
+    widget.classList.remove('expanded');
+    if (chatLog) {
+      chatLog.style.maxHeight = '160px';
+      chatLog.style.minHeight = '';
+    }
+    expandBtn.style.display = 'inline-block';
+    reduceBtn.style.display = 'none';
+    if (widget) widget.style.maxHeight = '90vh';
+    adaptMobile();
+
   };
 
 
