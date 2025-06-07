@@ -348,6 +348,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   });
   closeBtn.onclick = closeWidget;
   header.appendChild(closeBtn);
+
   widget.appendChild(header);
 
   function getWelcomeMsg() {
@@ -391,7 +392,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   chatLog.style.transition = 'max-height 0.25s cubic-bezier(0.4,0.3,0.6,1)';
   chatLog.style.display = hasOpenedChat ? '' : 'none';
 
-  // === Boutons agrandir/réduire ===
   const expandBtn = document.createElement('button');
   expandBtn.innerHTML = '🗖';
   expandBtn.title = 'Agrandir';
@@ -399,14 +399,20 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     position: 'absolute',
     top: '8px',
     right: '10px',
+
+    padding: '2px 6px',
+    borderRadius: '6px',
+
     background: '#fff',
     border: 'none',
     color: '#888',
     fontSize: '18px',
     cursor: 'pointer',
+
     zIndex: '10',
     padding: '2px 6px',
     borderRadius: '6px'
+
   });
   chatLog.appendChild(expandBtn);
 
@@ -417,14 +423,20 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     position: 'absolute',
     top: '8px',
     right: '10px',
+
+    padding: '2px 6px',
+    borderRadius: '6px',
+
     background: '#fff',
     border: 'none',
     color: '#888',
     fontSize: '18px',
     cursor: 'pointer',
     zIndex: '10',
+
     padding: '2px 6px',
     borderRadius: '6px',
+
     display: 'none'
   });
   chatLog.appendChild(reduceBtn);
@@ -451,7 +463,11 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     expandBtn.style.display = 'inline-block';
     reduceBtn.style.display = 'none';
     if (widget) widget.style.maxHeight = '90vh';
+
   };
+
+ 
+
 
 
   widget.appendChild(chatLog);
