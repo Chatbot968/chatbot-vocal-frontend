@@ -122,8 +122,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       container.style.height = "";
       document.body.style.overflow = '';
     } else {
-      widget.style.width = "350px";
-      widget.style.maxWidth = "90vw";
+      const expanded = widget.classList.contains('expanded');
+      widget.style.width = expanded ? "520px" : "350px";
+      widget.style.maxWidth = expanded ? "520px" : "90vw";
       widget.style.borderRadius = "20px";
       widget.style.left = "";
       widget.style.right = "20px";
@@ -131,7 +132,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       widget.style.bottom = "calc(20px + env(safe-area-inset-bottom))";
       widget.style.position = "fixed";
       widget.style.height = "auto";
-      widget.style.maxHeight = "90vh";
+      widget.style.maxHeight = expanded ? "94vh" : "90vh";
       container.style.position = "fixed";
       container.style.left = "";
       container.style.right = "20px";
@@ -422,6 +423,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   let isExpanded = false;
   expandBtn.onclick = () => {
     isExpanded = true;
+    widget.classList.add('expanded');
     if (chatLog) {
       chatLog.style.maxHeight = '74vh';
       chatLog.style.minHeight = '320px';
@@ -429,9 +431,11 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     expandBtn.style.display = 'none';
     reduceBtn.style.display = 'inline-block';
     if (widget) widget.style.maxHeight = '85vh';
+    adaptMobile();
   };
   reduceBtn.onclick = () => {
     isExpanded = false;
+    widget.classList.remove('expanded');
     if (chatLog) {
       chatLog.style.maxHeight = '160px';
       chatLog.style.minHeight = '';
@@ -439,6 +443,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     expandBtn.style.display = 'inline-block';
     reduceBtn.style.display = 'none';
     if (widget) widget.style.maxHeight = '90vh';
+    adaptMobile();
   };
 
   widget.appendChild(chatLog);
