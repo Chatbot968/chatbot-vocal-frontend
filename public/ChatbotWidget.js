@@ -664,6 +664,15 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
         ALLOWED_TAGS: ['b', 'i', 'strong', 'a', 'img', 'br', 'ul', 'li', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'em', 'ol', 'blockquote'],
         ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'target']
       });
+      div.querySelectorAll('a').forEach(a => {
+        a.style.background = config.color;
+        a.style.color = '#fff';
+        a.style.padding = '6px 10px';
+        a.style.borderRadius = '8px';
+        a.style.display = 'inline-block';
+        a.style.textDecoration = 'none';
+        a.style.marginTop = '4px';
+      });
     } else {
       div.textContent = msg;
     }
@@ -803,9 +812,14 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     }
     .custom-chatbot-widget img { max-width: 100%; border-radius: 10px; margin-top: 6px; display: block; }
     .custom-chatbot-widget a {
-      color: ${config.color};
-      text-decoration: underline;
+      display: inline-block;
+      background: ${config.color};
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 8px;
+      text-decoration: none;
       font-size: 0.95em;
+      margin-top: 4px;
     }
     .custom-chatbot-widget h1,
     .custom-chatbot-widget h2,
