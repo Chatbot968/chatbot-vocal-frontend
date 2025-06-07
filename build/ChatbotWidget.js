@@ -135,7 +135,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       widget.style.position = "fixed";
       widget.style.height = "auto";
 
-      widget.style.maxHeight = expanded ? "94vh" : "90vh";
+      widget.style.maxHeight = "90vh";
 
       container.style.position = "fixed";
       container.style.left = "";
@@ -153,7 +153,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
     isWidgetOpen = false;
 
-    expanded = false;
     if (typeof sizeToggleBtn !== "undefined" && sizeToggleBtn) sizeToggleBtn.textContent = '🗖';
     if (typeof chatLog !== "undefined" && chatLog) {
       chatLog.style.maxHeight = '160px';
@@ -186,7 +185,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     isWidgetOpen = false;
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
-    expanded = false;
     if (typeof sizeToggleBtn !== "undefined" && sizeToggleBtn) sizeToggleBtn.textContent = '🗖';
     if (typeof chatLog !== "undefined" && chatLog) {
       chatLog.style.maxHeight = '160px';
