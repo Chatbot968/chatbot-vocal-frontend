@@ -96,7 +96,7 @@ function showAlert(msg) {
 
 function initChatbot(config, backendUrl, clientId, speechSupported) {
   // Toutes les variables (comme avant)
-  let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, isWidgetOpen = false;
+  let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, sizeToggleBtn, isWidgetOpen = false;
 
   // -------- PATCH ADAPT MOBILE 65vw/65vh -----------
   function adaptMobile() {
@@ -122,9 +122,11 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       container.style.height = "";
       document.body.style.overflow = '';
     } else {
-      const expanded = widget.classList.contains('expanded');
-      widget.style.width = expanded ? "520px" : "350px";
-      widget.style.maxWidth = expanded ? "520px" : "90vw";
+
+      widget.style.width = '';
+      widget.style.maxWidth = "90vw";
+      widget.style.maxHeight = '';
+
       widget.style.borderRadius = "20px";
       widget.style.left = "";
       widget.style.right = "20px";
@@ -132,7 +134,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       widget.style.bottom = "calc(20px + env(safe-area-inset-bottom))";
       widget.style.position = "fixed";
       widget.style.height = "auto";
+
       widget.style.maxHeight = expanded ? "94vh" : "90vh";
+
       container.style.position = "fixed";
       container.style.left = "";
       container.style.right = "20px";
@@ -148,6 +152,14 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
     isWidgetOpen = false;
+
+    expanded = false;
+    if (typeof sizeToggleBtn !== "undefined" && sizeToggleBtn) sizeToggleBtn.textContent = '🗖';
+    if (typeof chatLog !== "undefined" && chatLog) {
+      chatLog.style.maxHeight = '160px';
+      chatLog.style.minHeight = '';
+    }
+    if (typeof widget !== "undefined" && widget) widget.style.maxHeight = '90vh';
     if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
     if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
@@ -174,6 +186,13 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     isWidgetOpen = false;
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
+    expanded = false;
+    if (typeof sizeToggleBtn !== "undefined" && sizeToggleBtn) sizeToggleBtn.textContent = '🗖';
+    if (typeof chatLog !== "undefined" && chatLog) {
+      chatLog.style.maxHeight = '160px';
+      chatLog.style.minHeight = '';
+    }
+    if (typeof widget !== "undefined" && widget) widget.style.maxHeight = '90vh';
     if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
     if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
@@ -279,10 +298,11 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   widget = document.createElement('div');
   Object.assign(widget.style, {
     display: 'none',
-    flexDirection: 'column', width: '350px', maxWidth: '90vw',
+    flexDirection: 'column',
+    maxWidth: '90vw',
     background: `linear-gradient(to bottom, ${config.color}, #d7dcfa)`,
     color: '#000', borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-    padding: '20px', fontFamily: 'sans-serif', maxHeight: '90vh', overflow: 'hidden'
+    padding: '20px', fontFamily: 'sans-serif', overflow: 'hidden'
   });
   widget.classList.add('custom-chatbot-widget');
   shadow.appendChild(widget);
@@ -345,7 +365,25 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer', zIndex: '100001'
   });
   closeBtn.onclick = closeWidget;
-  header.appendChild(closeBtn);
+
+  sizeToggleBtn = document.createElement('button');
+  sizeToggleBtn.textContent = '🗖';
+  Object.assign(sizeToggleBtn.style, {
+    border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer'
+  });
+  sizeToggleBtn.onclick = () => {
+    const expanded = widget.classList.toggle('expanded');
+    sizeToggleBtn.textContent = expanded ? '✕' : '🗖';
+    if (expanded && chatLog) chatLog.scrollTop = chatLog.scrollHeight;
+  };
+
+  const btnWrap = document.createElement('div');
+  btnWrap.style.display = 'flex';
+  btnWrap.style.alignItems = 'center';
+  btnWrap.style.gap = '6px';
+  btnWrap.appendChild(sizeToggleBtn);
+  btnWrap.appendChild(closeBtn);
+  header.appendChild(btnWrap);
   widget.appendChild(header);
 
   function getWelcomeMsg() {
@@ -378,6 +416,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   widget.appendChild(suggBox);
 
   chatLog = document.createElement('div');
+  chatLog.classList.add('chat-log');
   chatLog.style.flex = '1';
   chatLog.style.overflowY = 'auto';
   chatLog.style.maxHeight = '160px';
@@ -389,9 +428,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   chatLog.style.transition = 'max-height 0.25s cubic-bezier(0.4,0.3,0.6,1)';
   chatLog.style.display = hasOpenedChat ? '' : 'none';
 
-  const expandBtn = document.createElement('button');
-  expandBtn.innerHTML = '🗖';
-  Object.assign(expandBtn.style, {
+  const sizeToggleBtn = document.createElement('button');
+  sizeToggleBtn.textContent = '🗖';
+  Object.assign(sizeToggleBtn.style, {
     position: 'absolute',
     top: '8px',
     right: '10px',
@@ -402,23 +441,8 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     cursor: 'pointer',
     zIndex: '10'
   });
-  chatLog.appendChild(expandBtn);
 
-  const reduceBtn = document.createElement('button');
-  reduceBtn.textContent = '✕';
-  Object.assign(reduceBtn.style, {
-    position: 'absolute',
-    top: '8px',
-    right: '10px',
-    background: '#fff',
-    border: 'none',
-    color: '#888',
-    fontSize: '20px',
-    cursor: 'pointer',
-    zIndex: '10',
-    display: 'none'
-  });
-  chatLog.appendChild(reduceBtn);
+
 
   let isExpanded = false;
   expandBtn.onclick = () => {
@@ -444,7 +468,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     reduceBtn.style.display = 'none';
     if (widget) widget.style.maxHeight = '90vh';
     adaptMobile();
+
   };
+
 
   widget.appendChild(chatLog);
 
@@ -824,6 +850,17 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
         overflow: auto !important;
       }
     }
+    .custom-chatbot-widget {
+      width: 350px;
+      max-height: 90vh;
+    }
+    .custom-chatbot-widget.expanded {
+      width: 520px;
+      max-height: 94vh;
+    }
+    .custom-chatbot-widget.expanded .chat-log {
+      max-height: 88vh;
+    }
     .custom-chatbot-widget img { max-width: 100%; border-radius: 10px; margin-top: 6px; display: block; }
     .custom-chatbot-widget a {
       display: inline-block;
@@ -857,6 +894,15 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       padding-left: 0.8em;
       border-left: 3px solid #ccc;
       color: #555;
+    }
+    .custom-chatbot-widget .chat-log {
+      transition: max-height 0.25s cubic-bezier(0.4,0.3,0.6,1);
+    }
+    .custom-chatbot-widget.expanded {
+      max-height: 85vh !important;
+    }
+    .custom-chatbot-widget.expanded .chat-log {
+      max-height: 74vh !important;
     }
     .chatbot-loader-bubbles {
       display: flex; align-items: center; height: 22px;
