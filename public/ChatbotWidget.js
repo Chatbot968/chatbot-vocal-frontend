@@ -213,14 +213,30 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     return null;
   }
 
-  function speakText(html) {
-    if (!window.speechSynthesis) return;
-    const product = extractProductSentence(html);
-    const text = product || sanitizeForSpeech(html);
-    const utterance = new SpeechSynthesisUtterance(text);
-    window.speechSynthesis.speak(utterance);
+  function buildSpeechSummary(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    tmp.querySelectorAll('a, img').forEach(el => el.remove());
+    const text = (tmp.textContent || tmp.innerText || '').trim();
+    const priceMatch = text.match(/\d+[.,]?\d*\s*€+/);
+    const price = priceMatch ? priceMatch[0].trim() : null;
+    const nameEl = tmp.querySelector('[data-product-name], .product-name, h1, h2, h3, strong, b');
+    let name = nameEl ? nameEl.textContent.trim() : null;
+    if (!name && priceMatch) {
+      name = text.slice(0, priceMatch.index).trim();
+    }
+    if (name && price) {
+      return `Je vous recommande ${name} au prix de ${price}.`;
+    }
+    return text;
   }
 
+  function speakText(html) {function speakText(html) {
+  if (!window.speechSynthesis) return;
+  const text = buildSpeechSummary(html);
+  const utterance = new SpeechSynthesisUtterance(text);
+  window.speechSynthesis.speak(utterance);
+}
   // --- GESTION DE L'HISTORIQUE & DE L'OUVERTURE CHAT ---
   let chatHistory = [];
   try {
