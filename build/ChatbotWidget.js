@@ -225,32 +225,29 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   function sanitizeForSpeech(html) {
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
-    tmp.querySelectorAll('a').forEach(a => {
-      const txt = document.createTextNode(a.textContent);
-      a.parentNode && a.parentNode.replaceChild(txt, a);
+tmp.querySelectorAll('a').forEach(a => {
+    const txt = document.createTextNode(a.textContent);
+    a.parentNode && a.parentNode.replaceChild(txt, a);
+});main
     });
     tmp.querySelectorAll('img').forEach(el => el.remove());
     let text = tmp.textContent || tmp.innerText || '';
     text = text.replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim();
     return text;
-  }
-
-  function extractProductSentence(html) {
+function extractProductSentence(html) {
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
     const nameEl = tmp.querySelector('.product-name, [data-product-name]');
     const priceEl = tmp.querySelector('.product-price, [data-product-price], .price');
     if (nameEl && priceEl) {
-      const name = nameEl.textContent.trim();
-      const price = priceEl.textContent.trim();
-      if (name && price) {
-        return `${name} pour ${price}`;
-      }
+        const nom = nameEl.textContent.trim();
+        const prix = priceEl.textContent.trim();
+        if (nom && prix) {
+            return `${nom} pour ${prix}`;
+        }
     }
     return null;
-  }
-
-  function speakText(html) {
+}  function speakText(html) {
     if (!window.speechSynthesis) return;
     const product = extractProductSentence(html);
     const text = product || sanitizeForSpeech(html);
