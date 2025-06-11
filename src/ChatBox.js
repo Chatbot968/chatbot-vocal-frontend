@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import './ChatMessage.css';
+import React, { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
 
-function ChatBox() {
+export default function ChatBox() {
   const [expanded, setExpanded] = useState(false);
   const [messages, setMessages] = useState(() => window.chatHistory || []);
 
@@ -10,30 +9,45 @@ function ChatBox() {
     function handleUpdate() {
       setMessages([...window.chatHistory]);
     }
-    window.addEventListener('chatHistoryUpdate', handleUpdate);
-    return () => window.removeEventListener('chatHistoryUpdate', handleUpdate);
+    window.addEventListener("chatHistoryUpdate", handleUpdate);
+    return () => window.removeEventListener("chatHistoryUpdate", handleUpdate);
   }, []);
 
   return (
-    <div
-      className={`relative bg-white rounded-lg p-3 overflow-y-auto transition-all ${expanded ? 'max-h-[75vh]' : 'max-h-40'}`}
-    >
-      <button
-        className="absolute top-1 right-1 text-xl"
-        onClick={() => setExpanded(!expanded)}
-        aria-label={expanded ? 'Réduire' : 'Agrandir'}
+    <div className="flex flex-col w-full items-center">
+      <div
+        className={`relative transition-all duration-300 bg-white rounded-2xl shadow p-4 mb-2 w-full max-w-lg ${
+          expanded ? "max-h-[80vh]" : "max-h-72"
+        } overflow-y-auto`}
+        style={{ minHeight: 120 }}
       >
-        {expanded ? '🗕' : '🗖'}
-      </button>
-      {messages.map((m, idx) => (
-        <div key={idx} className={`flex my-2 ${m.sender === 'user' ? 'justify-end' : ''}`}> 
-          <div className={`${m.sender === 'user' ? 'bg-blue-100' : 'bg-gray-100'} rounded-xl p-2 max-w-[85%]`}>
-            <ReactMarkdown>{m.msg}</ReactMarkdown>
+        {/* Bouton en haut à droite */}
+        <button
+          onClick={() => setExpanded((e) => !e)}
+          className="absolute top-3 right-4 bg-gray-100 hover:bg-gray-200 transition px-3 py-1 rounded-xl text-xs shadow font-medium z-10"
+        >
+          {expanded ? "Réduire" : "Agrandir"}
+        </button>
+
+        {/* Contenu du chat */}
+        {messages.map((msg, idx) => (
+          <div key={idx} className="mb-2">
+            <ReactMarkdown
+              components={{
+                img: ({ node, ...props }) => (
+                  <img
+                    {...props}
+                    className="my-2 rounded-xl mx-auto max-h-72 object-contain"
+                    alt={props.alt}
+                  />
+                ),
+              }}
+            >
+              {msg.content || msg.msg}
+            </ReactMarkdown>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
-
-export default ChatBox;
