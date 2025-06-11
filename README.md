@@ -77,3 +77,34 @@ The production site is hosted on [Render](https://render.com/) as a static site.
 
 If you encounter layout glitches or see an outdated version of the site, clear your browser cache and reload the page. Mobile browsers in particular tend to cache aggressively, so clearing the cache on your phone often resolves layout problems.
 
+## Tailwind CSS Setup
+
+This project uses [Tailwind CSS](https://tailwindcss.com/) for styling. To enable
+Tailwind when working locally:
+
+1. Install the required packages:
+
+   ```bash
+   npm install -D tailwindcss@3 postcss autoprefixer
+   npx tailwindcss init
+   ```
+
+2. Ensure `postcss.config.js` includes Tailwind and Autoprefixer:
+
+   ```javascript
+   module.exports = {
+     plugins: [require('tailwindcss'), require('autoprefixer')],
+   };
+   ```
+
+3. `src/index.css` should import Tailwind's base, components and utilities:
+
+   ```css
+   @tailwind base;
+   @tailwind components;
+   @tailwind utilities;
+   ```
+
+Create React App processes Tailwind automatically during `npm start` and
+`npm run build`.
+
