@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import "./App.css";
 import ConfigForm from "./ConfigForm";
+import ChatBox from "./ChatBox";
 import { WIDGET_VERSION } from "./widgetVersion";
 
 function App() {
@@ -9,7 +10,7 @@ function App() {
     const CLIENT_ID = "novacorp"; // ← L'ID pour charger config/novacorp.json
     const BACKEND_URL = "https://chatbot-vocal-backend.onrender.com";
     const FRONTEND_WIDGET_URL = `https://chatbot-vocal-frontend.onrender.com/ChatbotWidget.js?v=${WIDGET_VERSION}`;
-    
+
     // Injecte dynamiquement le widget chatbot vocal
     const script = document.createElement('script');
     script.src = FRONTEND_WIDGET_URL;
@@ -38,6 +39,7 @@ function App() {
         </ul>
       </section>
       <ConfigForm />
+      <ChatBox />
 
       <section>
         <h2>Qui sommes-nous ?</h2>
