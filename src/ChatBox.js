@@ -21,8 +21,7 @@ export default function ChatBox() {
         } overflow-y-auto`}
         style={{ minHeight: 120 }}
       >
-        {/* Bouton en haut à droite */}
-
+        {/* Bouton Agrandir/Réduire toujours visible */}
         <div className="sticky top-0 z-10 flex justify-end">
           <button
             onClick={() => setExpanded((e) => !e)}
