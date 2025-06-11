@@ -47,5 +47,6 @@ describe('ChatBox', () => {
     const parent = btn.parentElement;
     expect(parent.className).toContain('sticky');
     expect(parent.className).toContain('top-0');
+
   });
 });
