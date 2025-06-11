@@ -99,7 +99,8 @@ function showAlert(msg) {
 
 function initChatbot(config, backendUrl, clientId, speechSupported) {
   // Toutes les variables (comme avant)
-  let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, isWidgetOpen = false;
+  let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input,
+      expandBtn, reduceBtn, isWidgetOpen = false;
 
   // -------- PATCH ADAPT MOBILE 65vw/65vh -----------
   function adaptMobile() {
@@ -397,7 +398,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   chatLog.style.transition = 'max-height 0.25s cubic-bezier(0.4,0.3,0.6,1)';
   chatLog.style.display = hasOpenedChat ? '' : 'none';
 
-  const expandBtn = document.createElement('button');
+  expandBtn = document.createElement('button');
   expandBtn.innerHTML = '🗖';
   expandBtn.title = 'Agrandir';
   Object.assign(expandBtn.style, {
@@ -421,7 +422,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   });
   chatLog.appendChild(expandBtn);
 
-  const reduceBtn = document.createElement('button');
+  reduceBtn = document.createElement('button');
   reduceBtn.innerHTML = '🗕';
   reduceBtn.title = 'Réduire';
   Object.assign(reduceBtn.style, {
@@ -611,7 +612,18 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     localStorage.setItem('chatbotChatHistory', '[]');
     hasOpenedChat = false;
     localStorage.setItem('chatbotHasOpened', 'false');
-    if (chatLog) chatLog.innerHTML = '';
+    if (chatLog) {
+      chatLog.innerHTML = '';
+      if (expandBtn) chatLog.appendChild(expandBtn);
+      if (reduceBtn) chatLog.appendChild(reduceBtn);
+      if (isExpanded) {
+        expandBtn.style.display = 'none';
+        reduceBtn.style.display = 'inline-block';
+      } else {
+        expandBtn.style.display = 'inline-block';
+        reduceBtn.style.display = 'none';
+      }
+    }
     if (chatLog) chatLog.style.display = 'none';
     if (inputBox) inputBox.style.display = 'none';
     if (vocalCtaBox) vocalCtaBox.style.display = 'none';
@@ -733,6 +745,15 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   function renderHistory() {
     if (!chatLog) return;
     chatLog.innerHTML = '';
+    if (expandBtn) chatLog.appendChild(expandBtn);
+    if (reduceBtn) chatLog.appendChild(reduceBtn);
+    if (isExpanded) {
+      expandBtn.style.display = 'none';
+      reduceBtn.style.display = 'inline-block';
+    } else {
+      expandBtn.style.display = 'inline-block';
+      reduceBtn.style.display = 'none';
+    }
     chatHistory.forEach(item => appendMessage(item.msg, item.sender, item.isHTML));
   }
 
