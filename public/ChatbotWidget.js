@@ -485,6 +485,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   inputBox.style.alignItems = 'center';
   inputBox.style.overflow = 'hidden';
   inputBox.style.padding = '0 4px';
+  inputBox.style.position = 'sticky';
+  inputBox.style.bottom = '0';
+  inputBox.style.zIndex = '10';
 
   input = document.createElement('input');
   input.placeholder = 'Votre message...';
