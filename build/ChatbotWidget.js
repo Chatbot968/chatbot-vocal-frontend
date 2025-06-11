@@ -173,6 +173,16 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof widget !== "undefined" && widget) widget.blur?.();
   }
 
+  function disableChatbot() {
+    quotaExceeded = true;
+    localStorage.setItem('chatbotQuotaExceeded', 'true');
+    if (recognition) recognition.abort();
+    closeWidget();
+    if (launcher) launcher.style.display = 'none';
+    if (container) container.style.display = 'none';
+    showAlert('Quota atteint, veuillez contacter le support pour continuer');
+  }
+
   // NE PAS TOUCHER AU CONTAINER !! Il doit rester dans le DOM
   let container = document.querySelector('#chatbot-widget-container');
   if (!container) {
@@ -275,6 +285,10 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   try {
     hasOpenedChat = !!JSON.parse(localStorage.getItem('chatbotHasOpened') || 'false');
   } catch (e) {}
+  let quotaExceeded = false;
+  try {
+    quotaExceeded = !!JSON.parse(localStorage.getItem('chatbotQuotaExceeded') || 'false');
+  } catch (e) {}
 
   // ---- SHADOW DOM START ----
   container = document.createElement('div');
@@ -314,6 +328,10 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
 
   // === OUVERTURE/FERMETURE PATCHÉE ===
   function openWidget() {
+    if (quotaExceeded) {
+      showAlert('Quota atteint, veuillez contacter le support pour continuer');
+      return;
+    }
     if (typeof container !== "undefined" && container) container.style.display = '';
     if (typeof widget !== "undefined" && widget) widget.style.display = 'flex';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'none';
@@ -738,6 +756,10 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   }
 
   function handleMessage(msg) {
+    if (quotaExceeded) {
+      showAlert('Quota atteint, veuillez contacter le support pour continuer');
+      return;
+    }
     if (!chatLog) return;
     if (!hasOpenedChat) {
       hasOpenedChat = true;
@@ -759,12 +781,20 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       currentAudio.currentTime = 0;
       currentAudio = null;
     }
-    fetch(`${backendUrl}/api/ask`, {
+   fetch(`${backendUrl}/api/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, message: msg, clientId, vocalMode: !isTextMode })
     })
-      .then(r => r.json())
+      .then(async r => {
+        let data = {};
+        try { data = await r.json(); } catch (e) {}
+        if (r.status === 403 || (data && data.error === 'quota_exceeded')) {
+          disableChatbot();
+          throw new Error('quota_exceeded');
+        }
+        return data;
+      })
       .then(data => {
         hideLoader();
         let text = data.text || '(Pas de réponse)';
@@ -804,6 +834,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       })
       .catch((err) => {
         hideLoader();
+        if (err.message === 'quota_exceeded') return;
         appendMessage("Désolé, le serveur est injoignable.", 'bot');
         chatHistory.push({ msg: "Désolé, le serveur est injoignable.", sender: 'bot', isHTML: false });
         localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
@@ -818,6 +849,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   adaptMobile(); // pour forcer le style dès le boot
 
   updateModeUI();
+  if (quotaExceeded) {
+    disableChatbot();
+  }
 
   // === CSS ULTRA RESPONSIVE ===
   const style = document.createElement('style');
