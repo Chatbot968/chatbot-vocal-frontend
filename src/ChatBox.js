@@ -22,12 +22,16 @@ export default function ChatBox() {
         style={{ minHeight: 120 }}
       >
         {/* Bouton en haut à droite */}
-        <button
-          onClick={() => setExpanded((e) => !e)}
-          className="absolute top-3 right-4 bg-gray-100 hover:bg-gray-200 transition px-3 py-1 rounded-xl text-xs shadow font-medium z-10"
-        >
-          {expanded ? "Réduire" : "Agrandir"}
-        </button>
+
+        <div className="sticky top-0 z-10 flex justify-end">
+          <button
+            onClick={() => setExpanded((e) => !e)}
+            className="bg-gray-100 hover:bg-gray-200 transition px-3 py-1 rounded-xl text-xs shadow font-medium mt-1"
+            style={{ marginRight: 0 }}
+          >
+            {expanded ? "Réduire" : "Agrandir"}
+          </button>
+        </div>
 
         {/* Contenu du chat */}
         {messages.map((msg, idx) => (

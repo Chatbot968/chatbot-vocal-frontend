@@ -40,4 +40,13 @@ describe('ChatBox', () => {
     expect(img).toBeInTheDocument();
     expect(img.src).toBe('http://example.com/img.png');
   });
+
+  test('expand button stays in sticky container', () => {
+    const { getByRole } = render(<ChatBox />);
+    const btn = getByRole('button');
+    const parent = btn.parentElement;
+    expect(parent.className).toContain('sticky');
+    expect(parent.className).toContain('top-0');
+
+  });
 });
