@@ -253,6 +253,11 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   try {
     chatHistory = JSON.parse(localStorage.getItem('chatbotChatHistory') || '[]');
   } catch (e) {}
+  function notifyHistory() {
+    window.chatHistory = chatHistory.slice();
+    window.dispatchEvent(new Event('chatHistoryUpdate'));
+  }
+  notifyHistory();
   let hasOpenedChat = false;
   try {
     hasOpenedChat = !!JSON.parse(localStorage.getItem('chatbotHasOpened') || 'false');
@@ -612,6 +617,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (vocalCtaBox) vocalCtaBox.style.display = 'none';
     if (suggBox) suggBox.style.display = '';
     closeWidget();
+    notifyHistory();
   };
   rgpd.parentNode.insertBefore(clearHistory, rgpd.nextSibling);
 
@@ -746,6 +752,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     appendMessage(msg, 'user');
     chatHistory.push({ msg, sender: 'user', isHTML: false });
     localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
+    notifyHistory();
     showLoader();
     if (currentAudio && !currentAudio.paused) {
       currentAudio.pause();
@@ -767,6 +774,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
         const msgEl = appendMessage(text, 'bot', true);
         chatHistory.push({ msg: text, sender: 'bot', isHTML: true });
         localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
+        notifyHistory();
         if (!isTextMode) {
           if (data.audioUrl) {
             currentAudio = new Audio(data.audioUrl);
@@ -791,6 +799,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
             appendMessage("(Réponse vocale indisponible pour ce message)", 'bot');
             chatHistory.push({ msg: "(Réponse vocale indisponible pour ce message)", sender: 'bot', isHTML: false });
             localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
+            notifyHistory();
             speakText(data.text || '');
           }
         }
@@ -800,6 +809,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
         appendMessage("Désolé, le serveur est injoignable.", 'bot');
         chatHistory.push({ msg: "Désolé, le serveur est injoignable.", sender: 'bot', isHTML: false });
         localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
+        notifyHistory();
         showAlert("Erreur : le backend du chatbot n'est pas joignable.");
       });
   }
