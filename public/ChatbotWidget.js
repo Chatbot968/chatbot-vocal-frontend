@@ -25,6 +25,10 @@ function ensureMarkdownDeps() {
 }
 
 (function() {
+  if (typeof window.destroyChatbotWidget === 'function') {
+    try { window.destroyChatbotWidget(); } catch (e) { console.warn(e); }
+    delete window.destroyChatbotWidget;
+  }
   const allContainers = document.querySelectorAll('div[style*="z-index: 9999"]');
   allContainers.forEach(el => el.parentNode && el.parentNode.removeChild(el));
   const oldAlerts = document.querySelectorAll('#chatbot-global-alert');
@@ -148,6 +152,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       container.style.height = "";
       document.body.style.overflow = '';
     }
+  }
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', adaptMobile);
   }
   // ----------- PATCH FERMETURE --------
   function closeWidget() {
@@ -316,6 +323,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   // === RESPONSIVITÉ PATCHÉE ===
   window.addEventListener('resize', adaptMobile);
   window.addEventListener('orientationchange', adaptMobile);
+
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', () => {
       adaptMobile();
@@ -511,6 +519,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   widget.appendChild(chatLog);
 
   inputBox = document.createElement('div');
+  inputBox.classList.add('chat-input-box');
   inputBox.style.display = hasOpenedChat ? 'flex' : 'none';
   inputBox.style.background = '#fff';
   inputBox.style.borderRadius = '16px';
@@ -986,6 +995,10 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     button:focus { outline: 2px solid #009fff77 !important; }
     .msg-fadein { animation: fadeInUp 0.4s; }
     @keyframes fadeInUp { from { opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
+    .custom-chatbot-widget .chat-input-box {
+      position: sticky;
+      bottom: 0;
+    }
   `;
   const demoMsg = '# Exemple de markdown\n\n**Bienvenue** sur le *chatbot*.\n\n- Premier\n- Deuxième\n\n![Image](https://via.placeholder.com/150)\n\n[Visiter le site](https://example.com)';
   appendMessage(demoMsg, 'bot', true);
