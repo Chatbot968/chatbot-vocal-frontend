@@ -235,29 +235,14 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   function sanitizeForSpeech(html) {
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
-    tmp.querySelectorAll('a').forEach(a => {
-      const txt = document.createTextNode(a.textContent);
-      a.parentNode && a.parentNode.replaceChild(txt, a);
+   tmp.querySelectorAll('a').forEach(a => {
+        const txt = document.createTextNode(a.textContent);
+        a.parentNode && a.parentNode.replaceChild(txt, a);
     });
     tmp.querySelectorAll('img').forEach(el => el.remove());
-    let text = tmp.textContent || tmp.innerText || '';
-    text = text.replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim();
-    return text;
-  }
-
-  function extractProductSentence(html) {
-    const tmp = document.createElement('div');
-    tmp.innerHTML = html;
-    const nameEl = tmp.querySelector('.product-name, [data-product-name]');
-    const priceEl = tmp.querySelector('.product-price, [data-product-price], .price');
-    if (nameEl && priceEl) {
-      const name = nameEl.textContent.trim();
-      const price = priceEl.textContent.trim();
-      if (name && price) {
-        return `${name} pour ${price}`;
-      }
-    }
-    return null;
+    let texte = tmp.textContent || tmp.innerText || '';
+    texte = texte.replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim();
+    return texte;main
   }
 
   function speakText(html) {
