@@ -25,6 +25,10 @@ function ensureMarkdownDeps() {
 }
 
 (function() {
+  if (typeof window.destroyChatbotWidget === 'function') {
+    try { window.destroyChatbotWidget(); } catch (e) { console.warn(e); }
+    delete window.destroyChatbotWidget;
+  }
   const allContainers = document.querySelectorAll('div[style*="z-index: 9999"]');
   allContainers.forEach(el => el.parentNode && el.parentNode.removeChild(el));
   const oldAlerts = document.querySelectorAll('#chatbot-global-alert');
@@ -145,6 +149,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       container.style.height = "";
       document.body.style.overflow = '';
     }
+  }
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', adaptMobile);
   }
   // ----------- PATCH FERMETURE --------
   function closeWidget() {
@@ -313,6 +320,13 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   // === RESPONSIVITÉ PATCHÉE ===
   window.addEventListener('resize', adaptMobile);
   window.addEventListener('orientationchange', adaptMobile);
+  window.destroyChatbotWidget = function() {
+    window.removeEventListener('resize', adaptMobile);
+    window.removeEventListener('orientationchange', adaptMobile);
+    if (window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', adaptMobile);
+    }
+  };
 
   // === OUVERTURE/FERMETURE PATCHÉE ===
   function openWidget() {
