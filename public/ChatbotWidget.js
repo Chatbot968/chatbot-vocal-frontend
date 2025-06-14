@@ -102,54 +102,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input,
       expandBtn, reduceBtn, isWidgetOpen = false;
 
-  // -------- PATCH ADAPT MOBILE 65vw/65svh -----------
-  function adaptMobile() {
-    const viewportHeight = window.visualViewport
-      ? window.visualViewport.height
-      : window.innerHeight;
-    if (window.innerWidth < 500) {
-      widget.style.width = "65vw";
-      widget.style.maxWidth = "65vw";
-      widget.style.minWidth = "0";
-      widget.style.left = "";
-      widget.style.right = "2vw";
-      widget.style.bottom = "calc(2vw + env(safe-area-inset-bottom))";
-      widget.style.top = "";
-      widget.style.borderRadius = "18px";
-      widget.style.padding = "4vw 2vw 2vw 2vw";
-      widget.style.position = "fixed";
-      widget.style.height = "auto";
-      widget.style.maxHeight = (viewportHeight * 0.65) + "px";
-      container.style.position = "fixed";
-      container.style.left = "";
-      container.style.right = "2vw";
-      container.style.bottom = "calc(2vw + env(safe-area-inset-bottom))";
-      container.style.top = "";
-      container.style.width = "";
-      container.style.height = "";
-      document.body.style.overflow = '';
-    } else {
-      widget.style.width = "350px";
-      widget.style.maxWidth = "90vw";
-      widget.style.borderRadius = "20px";
-      widget.style.left = "";
-      widget.style.right = "20px";
-      widget.style.top = "";
-      widget.style.bottom = "calc(20px + env(safe-area-inset-bottom))";
-      widget.style.position = "fixed";
-      widget.style.height = "auto";
-      widget.style.maxHeight = (viewportHeight * 0.9) + "px";
-      container.style.position = "fixed";
-      container.style.left = "";
-      container.style.right = "20px";
-      container.style.bottom = "calc(20px + env(safe-area-inset-bottom))";
-      container.style.top = "";
-      container.style.width = "";
-      container.style.height = "";
-      document.body.style.overflow = '';
-    }
-  }
-  if (window.visualViewport) {
   
   function closeWidget() {
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
@@ -159,10 +111,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
     if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
     if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = '';
-    if (window.innerWidth < 500) {
-      document.body.style.overflow = '';
-      window.scrollTo(0, 0);
-    }
     if (typeof widget !== "undefined" && widget) widget.blur?.();
   }
 
@@ -195,10 +143,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
     if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
     if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = '';
-    if (window.innerWidth < 500) {
-      document.body.style.overflow = '';
-      window.scrollTo(0, 0);
-    }
   }
 
   let recognition = null;
@@ -314,13 +258,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   widget.classList.add('custom-chatbot-widget');
   shadow.appendChild(widget);
 
-  // === RESPONSIVITÉ PATCHÉE ===
-  window.addEventListener('resize', adaptMobile);
-  window.addEventListener('orientationchange', adaptMobile);
-
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', () => {
-  }
 
   // === OUVERTURE/FERMETURE PATCHÉE ===
   function openWidget() {
@@ -332,7 +269,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof widget !== "undefined" && widget) widget.style.display = 'flex';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'none';
     isWidgetOpen = true;
-    adaptMobile();
     setTimeout(() => {
       if (isTextMode && typeof input !== "undefined" && input && input.focus) input.focus();
     }, 300);
@@ -348,18 +284,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     updateModeUI();
   }
   launcher.onclick = openWidget;
-
-  // Ferme le widget au resize/orientationchange si ouvert (et réadapte)
-  window.addEventListener('resize', () => {
-    adaptMobile();
-    if (window.innerWidth < 500 && isWidgetOpen) {
-      if (widget) widget.scrollTop = 0;
-      if (widget) widget.style.top = '';
-      if (widget) widget.style.bottom = window.innerHeight > 200
-        ? "calc(2vw + env(safe-area-inset-bottom))"
-        : "env(safe-area-inset-bottom)";
-    }
-  });
 
   // ========== UI DU CHATBOT (header, etc...) ==========
   const header = document.createElement('div');
@@ -883,7 +807,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
 
   // PATCH DIEGO : widget TOUJOURS fermé au démarrage, même si historique
   closeWidget();
-  adaptMobile(); // pour forcer le style dès le boot
 
   updateModeUI();
   if (quotaExceeded) {
@@ -985,6 +908,11 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     .custom-chatbot-widget .chat-input-box {
       position: sticky;
       bottom: 0;
+      height: 60px;
+      min-height: 60px;
+      max-height: 60px;
+      z-index: 9999;
+      padding-bottom: env(safe-area-inset-bottom, 20px);
     }
   `;
   const demoMsg = '# Exemple de markdown\n\n**Bienvenue** sur le *chatbot*.\n\n- Premier\n- Deuxième\n\n![Image](https://via.placeholder.com/150)\n\n[Visiter le site](https://example.com)';
