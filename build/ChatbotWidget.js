@@ -353,6 +353,19 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   }
   launcher.onclick = openWidget;
 
+  const headerLogoArea = document.createElement('div');
+  headerLogoArea.style.display = 'flex';
+  headerLogoArea.style.justifyContent = 'center';
+  headerLogoArea.style.alignItems = 'center';
+  headerLogoArea.style.padding = '10px 0';
+  const headerLogoImg = document.createElement('img');
+  headerLogoImg.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAyCAYAAAAus5mQAAAL8UlEQVR4nLWZ249f11XHP2vvfc753e...';
+  headerLogoImg.alt = 'Logo';
+  headerLogoImg.style.height = '50px';
+  headerLogoImg.style.objectFit = 'contain';
+  headerLogoArea.appendChild(headerLogoImg);
+  widget.appendChild(headerLogoArea);
+
   // Ferme le widget au resize/orientationchange si ouvert (et réadapte)
   window.addEventListener('resize', () => {
     adaptMobile();
