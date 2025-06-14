@@ -106,8 +106,11 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input,
       expandBtn, reduceBtn, isWidgetOpen = false;
 
-  // -------- PATCH ADAPT MOBILE 65vw/65vh -----------
+  // -------- PATCH ADAPT MOBILE 65vw/65svh -----------
   function adaptMobile() {
+    const viewportHeight = window.visualViewport
+      ? window.visualViewport.height
+      : window.innerHeight;
     if (window.innerWidth < 500) {
       widget.style.width = "65vw";
       widget.style.maxWidth = "65vw";
@@ -120,7 +123,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       widget.style.padding = "4vw 2vw 2vw 2vw";
       widget.style.position = "fixed";
       widget.style.height = "auto";
-      widget.style.maxHeight = (window.innerHeight * 0.65) + "px";
+      widget.style.maxHeight = (viewportHeight * 0.65) + "px";
       container.style.position = "fixed";
       container.style.left = "";
       container.style.right = "2vw";
@@ -139,7 +142,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       widget.style.bottom = "calc(20px + env(safe-area-inset-bottom))";
       widget.style.position = "fixed";
       widget.style.height = "auto";
-      widget.style.maxHeight = "90vh";
+      widget.style.maxHeight = (viewportHeight * 0.9) + "px";
       container.style.position = "fixed";
       container.style.left = "";
       container.style.right = "20px";
@@ -312,7 +315,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     flexDirection: 'column', width: '350px', maxWidth: '90vw',
     background: `linear-gradient(to bottom, ${config.color}, #d7dcfa)`,
     color: '#000', borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-    padding: '20px', fontFamily: 'sans-serif', maxHeight: '90vh', overflow: 'hidden'
+    padding: '20px', fontFamily: 'sans-serif', maxHeight: '90svh', overflow: 'hidden'
   });
   widget.classList.add('custom-chatbot-widget');
   shadow.appendChild(widget);
@@ -320,13 +323,17 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   // === RESPONSIVITÉ PATCHÉE ===
   window.addEventListener('resize', adaptMobile);
   window.addEventListener('orientationchange', adaptMobile);
-  window.destroyChatbotWidget = function() {
-    window.removeEventListener('resize', adaptMobile);
-    window.removeEventListener('orientationchange', adaptMobile);
-    if (window.visualViewport) {
-      window.visualViewport.removeEventListener('resize', adaptMobile);
-    }
-  };
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+      adaptMobile();
+      const vh = window.visualViewport.height;
+      if (widget) {
+        const ratio = window.innerWidth < 500 ? 0.65 : 0.9;
+        widget.style.maxHeight = (vh * ratio) + 'px';
+      }
+    });
+  }
 
   // === OUVERTURE/FERMETURE PATCHÉE ===
   function openWidget() {
@@ -484,13 +491,13 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   expandBtn.onclick = () => {
     isExpanded = true;
     if (chatLog) {
-      chatLog.style.maxHeight = '74vh';
+      chatLog.style.maxHeight = '74svh';
       chatLog.style.minHeight = '320px';
       chatLog.style.width = '';
     }
     expandBtn.style.display = 'none';
     reduceBtn.style.display = 'inline-block';
-    if (widget) widget.style.maxHeight = '85vh';
+    if (widget) widget.style.maxHeight = '85svh';
   };
   reduceBtn.onclick = () => {
     isExpanded = false;
@@ -501,7 +508,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     }
     expandBtn.style.display = 'inline-block';
     reduceBtn.style.display = 'none';
-    if (widget) widget.style.maxHeight = '90vh';
+    if (widget) widget.style.maxHeight = '90svh';
 
   };
 
@@ -911,7 +918,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
         box-shadow: 0 8px 32px #0002 !important;
         padding: 4vw 2vw 2vw 2vw !important;
         font-size: 1.06em !important;
-        max-height: 65vh !important;
+        max-height: 65svh !important;
         height: auto !important;
         display: flex;
         flex-direction: column !important;
