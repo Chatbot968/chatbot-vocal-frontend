@@ -25,10 +25,6 @@ function ensureMarkdownDeps() {
 }
 
 (function() {
-  if (typeof window.destroyChatbotWidget === 'function') {
-    try { window.destroyChatbotWidget(); } catch (e) { console.warn(e); }
-    delete window.destroyChatbotWidget;
-  }
   const allContainers = document.querySelectorAll('div[style*="z-index: 9999"]');
   allContainers.forEach(el => el.parentNode && el.parentNode.removeChild(el));
   const oldAlerts = document.querySelectorAll('#chatbot-global-alert');
@@ -154,9 +150,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     }
   }
   if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', adaptMobile);
-  }
-  // ----------- PATCH FERMETURE --------
+  
   function closeWidget() {
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
@@ -326,13 +320,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
 
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', () => {
-      adaptMobile();
-      const vh = window.visualViewport.height;
-      if (widget) {
-        const ratio = window.innerWidth < 500 ? 0.65 : 0.9;
-        widget.style.maxHeight = (vh * ratio) + 'px';
-      }
-    });
   }
 
   // === OUVERTURE/FERMETURE PATCHÉE ===
