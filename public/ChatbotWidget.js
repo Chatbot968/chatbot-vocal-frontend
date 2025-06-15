@@ -438,7 +438,10 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     }
     expandBtn.style.display = 'none';
     reduceBtn.style.display = 'inline-block';
-    if (widget) widget.style.maxHeight = '85svh';
+    if (widget) {
+      widget.style.maxHeight = 'calc(90vh - 40px)';
+      widget.style.transform = 'translateY(-40px)';
+    }
   };
   reduceBtn.onclick = () => {
     isExpanded = false;
@@ -449,7 +452,10 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     }
     expandBtn.style.display = 'inline-block';
     reduceBtn.style.display = 'none';
-    if (widget) widget.style.maxHeight = '90svh';
+    if (widget) {
+      widget.style.maxHeight = 'calc(90vh - 40px)';
+      widget.style.transform = 'translateY(0)';
+    }
 
   };
 
