@@ -13,6 +13,7 @@ const CURRENT_KEY = 'chatbotCurrentSession';
 let sessions = [];
 let currentSessionId;
 let renderHistory = () => {};
+let widgetConfig = {};
 
 function loadScript(src) {
   return new Promise(res => {
@@ -41,7 +42,7 @@ function loadSessions(){
   try{sessions=JSON.parse(localStorage.getItem(SESSION_KEY)||'[]')}catch(e){sessions=[]}
   currentSessionId=localStorage.getItem(CURRENT_KEY)||null
 }
-function saveSessions(){localStorage.setItem(SESSION_KEY,JSON.stringify(sessions))}
+function saveSessions(){const c=widgetConfig||{};if(c.maxHistory&&Number.isFinite(c.maxHistory)){sessions.forEach(s=>{s.history.length>c.maxHistory&&(s.history=s.history.slice(-c.maxHistory))})}if(c.maxSessions&&Number.isFinite(c.maxSessions)&&sessions.length>c.maxSessions){sessions=sessions.slice(-c.maxSessions);sessions.some(s=>s.id===currentSessionId)||(currentSessionId=sessions[sessions.length-1]?.id,currentSessionId&&localStorage.setItem(CURRENT_KEY,currentSessionId))}localStorage.setItem(SESSION_KEY,JSON.stringify(sessions))}
 function getCurrentSession(){return sessions.find(s=>s.id===currentSessionId)}
 function setCurrentSession(id){currentSessionId=id;localStorage.setItem(CURRENT_KEY,id);if(typeof renderHistory==="function")renderHistory();if(typeof renderSessions==="function")renderSessions();saveSessions()}
 function createNewSession(){const s={id:'chat_'+Date.now(),title:'Nouvelle discussion',history:[]};sessions.push(s);saveSessions();setCurrentSession(s.id);if(typeof renderSessions==="function")renderSessions()}
@@ -65,6 +66,8 @@ async function loadAndInitChatbot(speechSupported) {
   const scriptTag = document.currentScript || document.querySelector('script[data-client-id]');
   const clientId = scriptTag?.getAttribute('data-client-id') || "novacorp";
   const backendUrl = scriptTag?.getAttribute('data-backend-url') || "https://chatbot-vocal-backend.onrender.com";
+  const maxSessions = parseInt(scriptTag?.getAttribute('data-max-sessions'), 10);
+  const maxHistory = parseInt(scriptTag?.getAttribute('data-max-history') || scriptTag?.getAttribute('data-max-messages'), 10);
   let config = {
     color: "#0078d4",
     logo: null,
@@ -73,7 +76,9 @@ async function loadAndInitChatbot(speechSupported) {
       "Quels sont vos services ?",
       "J’aimerais en savoir plus sur vos tarifs"
     ],
-    rgpdLink: "/politique-confidentialite.html"
+    rgpdLink: "/politique-confidentialite.html",
+    maxSessions: null,
+    maxHistory: null
   };
   try {
     const res = await fetch(`${backendUrl}/config/${clientId}.json`);
@@ -88,6 +93,9 @@ async function loadAndInitChatbot(speechSupported) {
   } catch (e) {
     showAlert("Erreur réseau : la configuration du chatbot n'a pas pu être chargée.");
   }
+  Number.isFinite(maxSessions)&&(config.maxSessions=maxSessions);
+  Number.isFinite(maxHistory)&&(config.maxHistory=maxHistory);
+  widgetConfig=config;window.chatbotWidgetConfig=config;
   initChatbot(config, backendUrl, clientId, speechSupported);
 }
 

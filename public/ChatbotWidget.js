@@ -14,6 +14,7 @@ const CURRENT_KEY = 'chatbotCurrentSession';
 let sessions = [];
 let currentSessionId;
 let renderHistory = () => {};
+let widgetConfig = {};
 
 function loadScript(src) {
   return new Promise(res => {
@@ -51,6 +52,21 @@ function loadSessions() {
 }
 
 function saveSessions() {
+  const cfg = widgetConfig || {};
+  if (cfg.maxHistory && Number.isFinite(cfg.maxHistory)) {
+    sessions.forEach(s => {
+      if (s.history.length > cfg.maxHistory) {
+        s.history = s.history.slice(-cfg.maxHistory);
+      }
+    });
+  }
+  if (cfg.maxSessions && Number.isFinite(cfg.maxSessions) && sessions.length > cfg.maxSessions) {
+    sessions = sessions.slice(-cfg.maxSessions);
+    if (!sessions.some(s => s.id === currentSessionId)) {
+      currentSessionId = sessions[sessions.length - 1]?.id;
+      if (currentSessionId) localStorage.setItem(CURRENT_KEY, currentSessionId);
+    }
+  }
   localStorage.setItem(SESSION_KEY, JSON.stringify(sessions));
 }
 
@@ -66,11 +82,43 @@ function setCurrentSession(id) {
   saveSessions();
 }
 
+function deleteSession(id) {
+  const idx = sessions.findIndex(s => s.id === id);
+  if (idx === -1) return;
+  const wasCurrent = id === currentSessionId;
+  sessions.splice(idx, 1);
+  saveSessions();
+  if (sessions.length === 0) {
+    createNewSession();
+    return;
+  }
+  if (wasCurrent) {
+    setCurrentSession(sessions[0].id);
+  } else {
+    if (typeof renderSessions === 'function') renderSessions();
+    if (typeof renderHistory === 'function') renderHistory();
+  }
+}
+
 function createNewSession() {
   const session = { id: 'chat_' + Date.now(), title: 'Nouvelle discussion', history: [] };
   sessions.push(session);
   saveSessions();
   setCurrentSession(session.id);
+  hasOpenedChat = false;
+  localStorage.setItem('chatbotHasOpened', 'false');
+  if (chatLog) {
+    chatLog.innerHTML = '';
+    if (typeof expandBtn !== 'undefined' && expandBtn) chatLog.appendChild(expandBtn);
+    if (typeof reduceBtn !== 'undefined' && reduceBtn) chatLog.appendChild(reduceBtn);
+    if (expandBtn) expandBtn.style.display = 'inline-block';
+    if (reduceBtn) reduceBtn.style.display = 'none';
+    chatLog.style.display = 'none';
+  }
+  if (inputBox) inputBox.style.display = 'none';
+  if (vocalCtaBox) vocalCtaBox.style.display = 'none';
+  if (suggBox) suggBox.style.display = '';
+  notifyHistory();
   if (typeof renderSessions === 'function') renderSessions();
 }
 
@@ -94,6 +142,8 @@ async function loadAndInitChatbot(speechSupported) {
   const scriptTag = document.currentScript || document.querySelector('script[data-client-id]');
   const clientId = scriptTag?.getAttribute('data-client-id') || "novacorp";
   const backendUrl = scriptTag?.getAttribute('data-backend-url') || "https://chatbot-vocal-backend.onrender.com";
+  const maxSessions = parseInt(scriptTag?.getAttribute('data-max-sessions'), 10);
+  const maxHistory = parseInt(scriptTag?.getAttribute('data-max-history') || scriptTag?.getAttribute('data-max-messages'), 10);
   let config = {
     color: "#0078d4",
     logo: null,
@@ -102,7 +152,9 @@ async function loadAndInitChatbot(speechSupported) {
       "Quels sont vos services ?",
       "J’aimerais en savoir plus sur vos tarifs"
     ],
-    rgpdLink: "/politique-confidentialite.html"
+    rgpdLink: "/politique-confidentialite.html",
+    maxSessions: null,
+    maxHistory: null
   };
   try {
     const res = await fetch(`${backendUrl}/config/${clientId}.json`);
@@ -117,6 +169,10 @@ async function loadAndInitChatbot(speechSupported) {
   } catch (e) {
     showAlert("Erreur réseau : la configuration du chatbot n'a pas pu être chargée.");
   }
+  if (Number.isFinite(maxSessions)) config.maxSessions = maxSessions;
+  if (Number.isFinite(maxHistory)) config.maxHistory = maxHistory;
+  widgetConfig = config;
+  window.chatbotWidgetConfig = config;
   initChatbot(config, backendUrl, clientId, speechSupported);
 }
 
@@ -308,11 +364,14 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (!sessionList) return;
     sessionList.innerHTML = '';
     sessions.forEach(s => {
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.marginBottom = '6px';
+
       const btn = document.createElement('button');
       btn.textContent = s.title || s.id;
-      btn.style.display = 'block';
-      btn.style.width = '100%';
-      btn.style.marginBottom = '6px';
+      btn.style.flex = '1';
       btn.style.textAlign = 'left';
       btn.style.padding = '6px 8px';
       btn.style.border = 'none';
@@ -326,7 +385,22 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
         btn.style.color = '#000';
       }
       btn.onclick = () => setCurrentSession(s.id);
+
       sessionList.appendChild(btn);
+
+      row.appendChild(btn);
+
+      const del = document.createElement('button');
+      del.textContent = '🗑';
+      del.style.marginLeft = '4px';
+      del.style.border = 'none';
+      del.style.background = 'transparent';
+      del.style.cursor = 'pointer';
+      del.onclick = (e) => { e.stopPropagation(); deleteSession(s.id); };
+      row.appendChild(del);
+
+      sessionList.appendChild(row);
+
     });
   };
   renderSessions();
