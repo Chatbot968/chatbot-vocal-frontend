@@ -441,8 +441,8 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     reduceBtn.style.display = 'inline-block';
     if (widget) {
       widget.style.maxHeight = 'calc(90vh - 40px)';
-      widget.style.transform = 'translateY(-40px)';
     }
+    if (container) container.style.transform = 'translateY(-40px)';
   };
   reduceBtn.onclick = () => {
     isExpanded = false;
@@ -455,8 +455,8 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     reduceBtn.style.display = 'none';
     if (widget) {
       widget.style.maxHeight = 'calc(90vh - 40px)';
-      widget.style.transform = 'translateY(0)';
     }
+    if (container) container.style.transform = 'translateY(0)';
 
   };
 
