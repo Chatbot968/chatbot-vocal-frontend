@@ -250,13 +250,41 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   widget = document.createElement('div');
   Object.assign(widget.style, {
     display: 'none',
-    flexDirection: 'column', width: '350px', maxWidth: '90vw',
+    flexDirection: 'column',
+    width: '350px',
+    maxWidth: '90vw',
     background: `linear-gradient(to bottom, ${config.color}, #d7dcfa)`,
-    color: '#000', borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-    padding: '20px', fontFamily: 'sans-serif', maxHeight: '90svh', overflow: 'hidden'
+    color: '#000',
+    borderRadius: '20px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+    padding: '20px',
+    fontFamily: 'sans-serif',
+    height: '100%',
+    maxHeight: '90svh',
+    overflow: 'hidden'
   });
   widget.classList.add('custom-chatbot-widget');
   shadow.appendChild(widget);
+
+  // Flex layout containers
+  const headerContainer = document.createElement('div');
+  headerContainer.className = 'chatbot-header';
+  headerContainer.style.flexShrink = '0';
+
+  const bodyContainer = document.createElement('div');
+  bodyContainer.className = 'chatbot-body';
+  bodyContainer.style.flex = '1';
+  bodyContainer.style.display = 'flex';
+  bodyContainer.style.flexDirection = 'column';
+  bodyContainer.style.overflowY = 'auto';
+
+  const footerContainer = document.createElement('div');
+  footerContainer.className = 'chatbot-footer';
+  footerContainer.style.flexShrink = '0';
+
+  widget.appendChild(headerContainer);
+  widget.appendChild(bodyContainer);
+  widget.appendChild(footerContainer);
 
 
   // === OUVERTURE/FERMETURE PATCHÉE ===
@@ -296,7 +324,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   headerLogoImg.style.height = '50px';
   headerLogoImg.style.objectFit = 'contain';
   headerLogoArea.appendChild(headerLogoImg);
-  widget.appendChild(headerLogoArea);
+  headerContainer.appendChild(headerLogoArea);
 
   // ========== UI DU CHATBOT (header, etc...) ==========
   const header = document.createElement('div');
@@ -319,7 +347,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   closeBtn.onclick = closeWidget;
   header.appendChild(closeBtn);
 
-  widget.appendChild(header);
+  headerContainer.appendChild(header);
 
   function getWelcomeMsg() {
     const h = new Date().getHours();
@@ -332,7 +360,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   title.innerHTML = getWelcomeMsg();
   title.style.margin = '16px 0';
   title.style.color = '#fff';
-  widget.appendChild(title);
+  headerContainer.appendChild(title);
 
   suggBox = document.createElement('div');
   Object.assign(suggBox.style, {
@@ -348,7 +376,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     item.onclick = () => handleMessage(s);
     suggBox.appendChild(item);
   });
-  widget.appendChild(suggBox);
+  bodyContainer.appendChild(suggBox);
 
   chatLog = document.createElement('div');
   chatLog.style.flex = '1';
@@ -440,7 +468,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
 
 
 
-  widget.appendChild(chatLog);
+  bodyContainer.appendChild(chatLog);
 
   inputBox = document.createElement('div');
   inputBox.classList.add('chat-input-box');
@@ -472,7 +500,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   });
 
   inputBox.appendChild(input);
-  widget.appendChild(inputBox);
+  footerContainer.appendChild(inputBox);
 
   vocalCtaBox = document.createElement('div');
   vocalCtaBox.style.display = hasOpenedChat ? 'none' : 'flex';
@@ -506,7 +534,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   };
 
   vocalCtaBox.appendChild(vocalCtaBtn);
-  if (speechSupported) widget.appendChild(vocalCtaBox);
+  if (speechSupported) footerContainer.appendChild(vocalCtaBox);
 
   const footerNav = document.createElement('div');
   footerNav.style.display = 'flex';
@@ -556,7 +584,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   }
   if (speechSupported) footerNav.appendChild(vocalTab);
   footerNav.appendChild(textTab);
-  widget.appendChild(footerNav);
+  footerContainer.appendChild(footerNav);
 
   const rgpd = document.createElement('a');
   rgpd.href = config.rgpdLink;
@@ -565,7 +593,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   Object.assign(rgpd.style, {
     fontSize: '11px', color: '#eee', marginTop: '6px', textAlign: 'right'
   });
-  widget.appendChild(rgpd);
+  footerContainer.appendChild(rgpd);
 
   const clearHistory = document.createElement('a');
   clearHistory.href = "#";
