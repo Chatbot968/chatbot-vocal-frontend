@@ -259,8 +259,8 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
     padding: '20px',
     fontFamily: 'sans-serif',
-    height: '100%',
-    maxHeight: '90svh',
+    height: 'auto',
+    maxHeight: 'calc(90vh - 40px)',
     overflow: 'hidden'
   });
   widget.classList.add('custom-chatbot-widget');
@@ -277,6 +277,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   bodyContainer.style.display = 'flex';
   bodyContainer.style.flexDirection = 'column';
   bodyContainer.style.overflowY = 'auto';
+  bodyContainer.style.minHeight = '200px';
 
   const footerContainer = document.createElement('div');
   footerContainer.className = 'chatbot-footer';
@@ -313,18 +314,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   }
   launcher.onclick = openWidget;
 
-  const headerLogoArea = document.createElement('div');
-  headerLogoArea.style.display = 'flex';
-  headerLogoArea.style.justifyContent = 'center';
-  headerLogoArea.style.alignItems = 'center';
-  headerLogoArea.style.padding = '10px 0';
-  const headerLogoImg = document.createElement('img');
-  headerLogoImg.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAyCAYAAAAus5mQAAAL8UlEQVR4nLWZ249f11XHP2vvfc753e...';
-  headerLogoImg.alt = 'Logo';
-  headerLogoImg.style.height = '50px';
-  headerLogoImg.style.objectFit = 'contain';
-  headerLogoArea.appendChild(headerLogoImg);
-  headerContainer.appendChild(headerLogoArea);
 
   // ========== UI DU CHATBOT (header, etc...) ==========
   const header = document.createElement('div');

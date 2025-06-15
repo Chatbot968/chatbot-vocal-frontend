@@ -136,7 +136,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       widget.style.height = "auto";
 
 
-      widget.style.maxHeight = "90vh";
+      widget.style.maxHeight = "calc(90vh - 40px)";
 
 
       container.style.position = "fixed";
@@ -161,7 +161,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       chatLog.style.maxHeight = '160px';
       chatLog.style.minHeight = '';
     }
-    if (typeof widget !== "undefined" && widget) widget.style.maxHeight = '90vh';
+    if (typeof widget !== "undefined" && widget) widget.style.maxHeight = 'calc(90vh - 40px)';
     if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
     if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
@@ -203,7 +203,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       chatLog.style.maxHeight = '160px';
       chatLog.style.minHeight = '';
     }
-    if (typeof widget !== "undefined" && widget) widget.style.maxHeight = '90vh';
+    if (typeof widget !== "undefined" && widget) widget.style.maxHeight = 'calc(90vh - 40px)';
     if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
     if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
@@ -353,18 +353,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   }
   launcher.onclick = openWidget;
 
-  const headerLogoArea = document.createElement('div');
-  headerLogoArea.style.display = 'flex';
-  headerLogoArea.style.justifyContent = 'center';
-  headerLogoArea.style.alignItems = 'center';
-  headerLogoArea.style.padding = '10px 0';
-  const headerLogoImg = document.createElement('img');
-  headerLogoImg.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAyCAYAAAAus5mQAAAL8UlEQVR4nLWZ249f11XHP2vvfc753e...';
-  headerLogoImg.alt = 'Logo';
-  headerLogoImg.style.height = '50px';
-  headerLogoImg.style.objectFit = 'contain';
-  headerLogoArea.appendChild(headerLogoImg);
-  widget.appendChild(headerLogoArea);
 
   // Ferme le widget au resize/orientationchange si ouvert (et réadapte)
   window.addEventListener('resize', () => {
@@ -507,7 +495,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     }
     expandBtn.style.display = 'inline-block';
     reduceBtn.style.display = 'none';
-    if (widget) widget.style.maxHeight = '90vh';
+    if (widget) widget.style.maxHeight = 'calc(90vh - 40px)';
 
   };
 
@@ -908,7 +896,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     }
     .custom-chatbot-widget {
       width: 350px;
-      max-height: 90vh;
+      max-height: calc(90vh - 40px);
     }
     .custom-chatbot-widget img { max-width: 100%; border-radius: 10px; margin-top: 6px; display: block; }
     .custom-chatbot-widget a {
