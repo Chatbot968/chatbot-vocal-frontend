@@ -66,6 +66,24 @@ function setCurrentSession(id) {
   saveSessions();
 }
 
+function deleteSession(id) {
+  const idx = sessions.findIndex(s => s.id === id);
+  if (idx === -1) return;
+  const wasCurrent = id === currentSessionId;
+  sessions.splice(idx, 1);
+  saveSessions();
+  if (sessions.length === 0) {
+    createNewSession();
+    return;
+  }
+  if (wasCurrent) {
+    setCurrentSession(sessions[0].id);
+  } else {
+    if (typeof renderSessions === 'function') renderSessions();
+    if (typeof renderHistory === 'function') renderHistory();
+  }
+}
+
 function createNewSession() {
   const session = { id: 'chat_' + Date.now(), title: 'Nouvelle discussion', history: [] };
   sessions.push(session);
@@ -316,11 +334,14 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (!sessionList) return;
     sessionList.innerHTML = '';
     sessions.forEach(s => {
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.marginBottom = '6px';
+
       const btn = document.createElement('button');
       btn.textContent = s.title || s.id;
-      btn.style.display = 'block';
-      btn.style.width = '100%';
-      btn.style.marginBottom = '6px';
+      btn.style.flex = '1';
       btn.style.textAlign = 'left';
       btn.style.padding = '6px 8px';
       btn.style.border = 'none';
@@ -334,8 +355,19 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
         btn.style.color = '#000';
       }
       btn.onclick = () => setCurrentSession(s.id);
-    sessionList.appendChild(btn);
-  });
+      row.appendChild(btn);
+
+      const del = document.createElement('button');
+      del.textContent = '🗑';
+      del.style.marginLeft = '4px';
+      del.style.border = 'none';
+      del.style.background = 'transparent';
+      del.style.cursor = 'pointer';
+      del.onclick = (e) => { e.stopPropagation(); deleteSession(s.id); };
+      row.appendChild(del);
+
+      sessionList.appendChild(row);
+    });
   };
   renderSessions();
 
