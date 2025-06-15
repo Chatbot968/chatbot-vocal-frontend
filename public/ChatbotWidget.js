@@ -940,11 +940,12 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     }
     .custom-chatbot-widget.fullscreen-mode {
       width: 100vw !important;
-      height: 100vh !important;
+      height: calc(100vh - env(safe-area-inset-bottom)) !important;
       max-width: 100vw !important;
-      max-height: 100vh !important;
+      max-height: calc(100vh - env(safe-area-inset-bottom)) !important;
       border-radius: 0 !important;
       padding: 20px !important;
+      box-sizing: border-box !important;
     }
     .custom-chatbot-widget.fullscreen-mode .chat-log {
       max-height: none !important;

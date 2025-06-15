@@ -487,9 +487,10 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (widget) {
       widget.style.width = '100vw';
       widget.style.maxWidth = '100vw';
-      widget.style.height = '100vh';
-      widget.style.maxHeight = '100vh';
+      widget.style.height = 'calc(100vh - env(safe-area-inset-bottom))';
+      widget.style.maxHeight = 'calc(100vh - env(safe-area-inset-bottom))';
       widget.style.borderRadius = '0';
+      widget.style.boxSizing = 'border-box';
     }
     if (container) {
       container.style.top = '0';
@@ -514,6 +515,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       widget.style.height = 'auto';
       widget.style.maxHeight = 'calc(90vh - 40px)';
       widget.style.borderRadius = '20px';
+      widget.style.boxSizing = '';
     }
     if (container) {
       container.style.bottom = 'calc(20px + env(safe-area-inset-bottom))';
