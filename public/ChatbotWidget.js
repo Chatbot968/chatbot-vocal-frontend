@@ -8,6 +8,9 @@ window.__CHATBOT_WIDGET_LOADED__ = true;
 window.CHATBOT_WIDGET_VERSION = 'v11 - ' + new Date().toISOString();
 console.log('🟢 [ChatbotWidget] Version chargée :', window.CHATBOT_WIDGET_VERSION);
 
+const SESSION_KEY = 'chatbotSessions';
+const CURRENT_KEY = 'chatbotCurrentSession';
+
 function loadScript(src) {
   return new Promise(res => {
     const s = document.createElement('script');
@@ -100,7 +103,7 @@ function showAlert(msg) {
 function initChatbot(config, backendUrl, clientId, speechSupported) {
   // Toutes les variables (comme avant)
   let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input,
-      expandBtn, reduceBtn, isWidgetOpen = false;
+      expandBtn, reduceBtn, isWidgetOpen = false, sidebar, sessionList;
 
   
   function closeWidget() {
@@ -112,6 +115,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
     if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
     if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = '';
+    if (sidebar) sidebar.style.display = 'none';
     if (typeof widget !== "undefined" && widget) widget.blur?.();
   }
 
@@ -134,9 +138,11 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     container.style.bottom = 'calc(20px + env(safe-area-inset-bottom))';
     container.style.right = '20px';
     container.style.zIndex = '9999';
+    container.style.display = 'flex';
+    container.style.alignItems = 'flex-start';
     document.body.appendChild(container);
   } else {
-    container.style.display = '';
+    container.style.display = 'flex';
     isWidgetOpen = false;
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
@@ -208,15 +214,61 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     return html;
   }
 
-  // --- GESTION DE L'HISTORIQUE & DE L'OUVERTURE CHAT ---
+  // --- GESTION DE L'HISTORIQUE & DES SESSIONS ---
+  let sessions = [];
+  let currentSessionId;
   let chatHistory = [];
-  try {
-    chatHistory = JSON.parse(localStorage.getItem('chatbotChatHistory') || '[]');
-  } catch (e) {}
+  function loadSessions() {
+    try { sessions = JSON.parse(localStorage.getItem(SESSION_KEY) || '[]'); } catch (e) { sessions = []; }
+    currentSessionId = localStorage.getItem(CURRENT_KEY);
+    if (!sessions.length) {
+      const s = { id: 'chat_' + Date.now(), title: 'Nouvelle discussion', history: [] };
+      sessions.push(s);
+      currentSessionId = s.id;
+      saveSessions();
+    }
+    if (!currentSessionId && sessions[0]) currentSessionId = sessions[0].id;
+    chatHistory = getCurrentSession().history;
+  }
+  function saveSessions() {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(sessions));
+    localStorage.setItem(CURRENT_KEY, currentSessionId);
+  }
+  function getCurrentSession() {
+    return sessions.find(s => s.id === currentSessionId) || sessions[0];
+  }
+  function setCurrentSession(id) {
+    currentSessionId = id;
+    chatHistory = getCurrentSession().history;
+    saveSessions();
+    renderHistory();
+    renderSessions();
+    notifyHistory();
+  }
+  function createNewSession() {
+    const s = { id: 'chat_' + Date.now(), title: 'Nouvelle discussion', history: [] };
+    sessions.push(s);
+    setCurrentSession(s.id);
+  }
+  function renderSessions() {
+    if (!sessionList) return;
+    sessionList.innerHTML = '';
+    sessions.forEach(s => {
+      const btn = document.createElement('button');
+      btn.textContent = s.title || s.id;
+      btn.style.display = 'block';
+      btn.style.marginTop = '4px';
+      btn.style.width = '100%';
+      btn.style.background = s.id === currentSessionId ? '#ddd' : '#fff';
+      btn.onclick = () => setCurrentSession(s.id);
+      sessionList.appendChild(btn);
+    });
+  }
   function notifyHistory() {
-    window.chatHistory = chatHistory.slice();
+    window.chatHistory = getCurrentSession().history.slice();
     window.dispatchEvent(new Event('chatHistoryUpdate'));
   }
+  loadSessions();
   notifyHistory();
   let hasOpenedChat = false;
   try {
@@ -237,6 +289,20 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   document.body.appendChild(container);
 
   const shadow = container.attachShadow({ mode: 'open' });
+
+  sidebar = document.createElement('div');
+  Object.assign(sidebar.style, {
+      width:'180px',background:'#eee',padding:'10px',
+      overflowY:'auto',display:'none',flexShrink:'0'
+  });
+  const newChat = document.createElement('button');
+  newChat.textContent = '+ Nouveau Chat';
+  newChat.onclick = createNewSession;
+  sidebar.appendChild(newChat);
+  sessionList = document.createElement('div');
+  sidebar.appendChild(sessionList);
+  shadow.appendChild(sidebar);
+  renderSessions();
 
   // === Launcher button (🤖) ===
   launcher = document.createElement('button');
@@ -295,7 +361,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       showAlert('Quota atteint, veuillez contacter le support pour continuer');
       return;
     }
-    if (typeof container !== "undefined" && container) container.style.display = '';
+    if (typeof container !== "undefined" && container) container.style.display = 'flex';
     if (typeof widget !== "undefined" && widget) widget.style.display = 'flex';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'none';
     isWidgetOpen = true;
@@ -311,6 +377,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
       if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = '';
     }
+    renderSessions();
     updateModeUI();
   }
   launcher.onclick = openWidget;
@@ -443,6 +510,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       widget.style.maxHeight = 'calc(90vh - 40px)';
     }
     if (container) container.style.transform = 'translateY(-40px)';
+    if (sidebar) sidebar.style.display = 'block';
   };
   reduceBtn.onclick = () => {
     isExpanded = false;
@@ -457,6 +525,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       widget.style.maxHeight = 'calc(90vh - 40px)';
     }
     if (container) container.style.transform = 'translateY(0)';
+    if (sidebar) sidebar.style.display = 'none';
 
   };
 
@@ -600,8 +669,10 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   clearHistory.style.textDecoration = "underline";
   clearHistory.onclick = (e) => {
     e.preventDefault();
-    chatHistory = [];
-    localStorage.setItem('chatbotChatHistory', '[]');
+    getCurrentSession().history = [];
+    chatHistory = getCurrentSession().history;
+    saveSessions();
+    renderSessions();
     hasOpenedChat = false;
     localStorage.setItem('chatbotHasOpened', 'false');
     if (chatLog) {
@@ -746,7 +817,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       expandBtn.style.display = 'inline-block';
       reduceBtn.style.display = 'none';
     }
-    chatHistory.forEach(item => appendMessage(item.msg, item.sender, item.isHTML));
+    getCurrentSession().history.forEach(item => appendMessage(item.msg, item.sender, item.isHTML));
   }
 
   function handleMessage(msg) {
@@ -767,8 +838,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
 
     if (suggBox) suggBox.style.display = 'none';
     appendMessage(msg, 'user');
-    chatHistory.push({ msg, sender: 'user', isHTML: false });
-    localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
+    getCurrentSession().history.push({ msg, sender: 'user', isHTML: false });
+    chatHistory = getCurrentSession().history;
+    saveSessions();
     notifyHistory();
     showLoader();
     if (currentAudio && !currentAudio.paused) {
@@ -797,8 +869,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
           text = htmlToMarkdown(text);
         }
         const msgEl = appendMessage(text, 'bot', true);
-        chatHistory.push({ msg: text, sender: 'bot', isHTML: true });
-        localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
+        getCurrentSession().history.push({ msg: text, sender: 'bot', isHTML: true });
+        chatHistory = getCurrentSession().history;
+        saveSessions();
         notifyHistory();
         if (!isTextMode) {
           if (data.audioUrl) {
@@ -822,8 +895,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
             });
           } else {
             appendMessage("(Réponse vocale indisponible pour ce message)", 'bot');
-            chatHistory.push({ msg: "(Réponse vocale indisponible pour ce message)", sender: 'bot', isHTML: false });
-            localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
+            getCurrentSession().history.push({ msg: "(Réponse vocale indisponible pour ce message)", sender: 'bot', isHTML: false });
+            chatHistory = getCurrentSession().history;
+            saveSessions();
             notifyHistory();
             speakText(data.text || '');
           }
@@ -833,8 +907,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
         hideLoader();
         if (err.message === 'quota_exceeded') return;
         appendMessage("Désolé, le serveur est injoignable.", 'bot');
-        chatHistory.push({ msg: "Désolé, le serveur est injoignable.", sender: 'bot', isHTML: false });
-        localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
+        getCurrentSession().history.push({ msg: "Désolé, le serveur est injoignable.", sender: 'bot', isHTML: false });
+        chatHistory = getCurrentSession().history;
+        saveSessions();
         notifyHistory();
         showAlert("Erreur : le backend du chatbot n'est pas joignable.");
       });
