@@ -71,6 +71,20 @@ function createNewSession() {
   sessions.push(session);
   saveSessions();
   setCurrentSession(session.id);
+  hasOpenedChat = false;
+  localStorage.setItem('chatbotHasOpened', 'false');
+  if (chatLog) {
+    chatLog.innerHTML = '';
+    if (typeof expandBtn !== 'undefined' && expandBtn) chatLog.appendChild(expandBtn);
+    if (typeof reduceBtn !== 'undefined' && reduceBtn) chatLog.appendChild(reduceBtn);
+    if (expandBtn) expandBtn.style.display = 'inline-block';
+    if (reduceBtn) reduceBtn.style.display = 'none';
+    chatLog.style.display = 'none';
+  }
+  if (inputBox) inputBox.style.display = 'none';
+  if (vocalCtaBox) vocalCtaBox.style.display = 'none';
+  if (suggBox) suggBox.style.display = '';
+  notifyHistory();
   if (typeof renderSessions === 'function') renderSessions();
 }
 
