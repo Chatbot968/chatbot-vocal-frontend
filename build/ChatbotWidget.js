@@ -478,13 +478,26 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   expandBtn.onclick = () => {
     isExpanded = true;
     if (chatLog) {
-      chatLog.style.maxHeight = '74vh';
-      chatLog.style.minHeight = '320px';
-      chatLog.style.width = '';
+      chatLog.style.maxHeight = 'none';
+      chatLog.style.minHeight = '0';
+      chatLog.style.width = 'auto';
     }
     expandBtn.style.display = 'none';
     reduceBtn.style.display = 'inline-block';
-    if (widget) widget.style.maxHeight = '85vh';
+    if (widget) {
+      widget.style.width = '100vw';
+      widget.style.maxWidth = '100vw';
+      widget.style.height = '100vh';
+      widget.style.maxHeight = '100vh';
+      widget.style.borderRadius = '0';
+    }
+    if (container) {
+      container.style.top = '0';
+      container.style.left = '0';
+      container.style.right = '0';
+      container.style.bottom = '0';
+      container.style.transform = 'none';
+    }
   };
   reduceBtn.onclick = () => {
     isExpanded = false;
@@ -495,7 +508,20 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     }
     expandBtn.style.display = 'inline-block';
     reduceBtn.style.display = 'none';
-    if (widget) widget.style.maxHeight = 'calc(90vh - 40px)';
+    if (widget) {
+      widget.style.width = '350px';
+      widget.style.maxWidth = '90vw';
+      widget.style.height = 'auto';
+      widget.style.maxHeight = 'calc(90vh - 40px)';
+      widget.style.borderRadius = '20px';
+    }
+    if (container) {
+      container.style.bottom = 'calc(20px + env(safe-area-inset-bottom))';
+      container.style.right = '20px';
+      container.style.top = '';
+      container.style.left = '';
+      container.style.transform = 'translateY(0)';
+    }
 
   };
 
