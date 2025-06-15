@@ -8,6 +8,13 @@ window.__CHATBOT_WIDGET_LOADED__ = true;
 window.CHATBOT_WIDGET_VERSION = 'v11 - ' + new Date().toISOString();
 console.log('🟢 [ChatbotWidget] Version chargée :', window.CHATBOT_WIDGET_VERSION);
 
+// --- Gestion multi-sessions ---
+const SESSION_KEY = 'chatbotSessions';
+const CURRENT_KEY = 'chatbotCurrentSession';
+let sessions = [];
+let currentSessionId;
+let renderHistory = () => {};
+
 function loadScript(src) {
   return new Promise(res => {
     const s = document.createElement('script');
@@ -33,6 +40,41 @@ function ensureMarkdownDeps() {
 
 function ChatMessage(_ref){var markdown=_ref.markdown;return React.createElement(window.ReactMarkdown,{components:{a:function(props){return React.createElement("a",Object.assign({},props,{target:"_blank",rel:"noopener noreferrer"}))},img:function(props){return React.createElement("img",props);}},children:markdown});}
 window.ChatMessage=ChatMessage;
+
+function loadSessions() {
+  try {
+    sessions = JSON.parse(localStorage.getItem(SESSION_KEY) || '[]');
+  } catch (e) {
+    sessions = [];
+  }
+  currentSessionId = localStorage.getItem(CURRENT_KEY) || null;
+}
+
+function saveSessions() {
+  localStorage.setItem(SESSION_KEY, JSON.stringify(sessions));
+}
+
+function getCurrentSession() {
+  return sessions.find(s => s.id === currentSessionId);
+}
+
+function setCurrentSession(id) {
+  currentSessionId = id;
+  localStorage.setItem(CURRENT_KEY, id);
+  if (typeof renderHistory === 'function') renderHistory();
+  if (typeof renderSessions === 'function') renderSessions();
+  saveSessions();
+}
+
+function createNewSession() {
+  const session = { id: 'chat_' + Date.now(), title: 'Nouvelle discussion', history: [] };
+  sessions.push(session);
+  saveSessions();
+  setCurrentSession(session.id);
+  if (typeof renderSessions === 'function') renderSessions();
+}
+
+let renderSessions = () => {};
 
 ensureMarkdownDeps().then(declareSpeechRecognition);
 
@@ -100,13 +142,26 @@ function showAlert(msg) {
 function initChatbot(config, backendUrl, clientId, speechSupported) {
   // Toutes les variables (comme avant)
   let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input,
-      expandBtn, reduceBtn, isWidgetOpen = false;
+      expandBtn, reduceBtn, sidebar, sessionList,
+      isWidgetOpen = false;
+
+  loadSessions();
+  if (sessions.length === 0) {
+    const s = { id: 'chat_' + Date.now(), title: 'Nouvelle discussion', history: [] };
+    sessions.push(s);
+    saveSessions();
+    currentSessionId = s.id;
+    localStorage.setItem(CURRENT_KEY, s.id);
+  }
+  if (typeof renderSessions === 'function') renderSessions();
+
 
   
   function closeWidget() {
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
     isWidgetOpen = false;
+    if (sidebar) sidebar.style.display = 'none';
     if (container) container.style.transform = 'translateY(0)';
     if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
@@ -209,12 +264,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   }
 
   // --- GESTION DE L'HISTORIQUE & DE L'OUVERTURE CHAT ---
-  let chatHistory = [];
-  try {
-    chatHistory = JSON.parse(localStorage.getItem('chatbotChatHistory') || '[]');
-  } catch (e) {}
   function notifyHistory() {
-    window.chatHistory = chatHistory.slice();
+    const hist = getCurrentSession()?.history || [];
+    window.chatHistory = hist.slice();
     window.dispatchEvent(new Event('chatHistoryUpdate'));
   }
   notifyHistory();
@@ -235,6 +287,57 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   container.style.right = '20px';
   container.style.zIndex = '9999';
   document.body.appendChild(container);
+
+  sidebar = document.createElement('div');
+  sidebar.style.position = 'fixed';
+  sidebar.style.bottom = container.style.bottom;
+  sidebar.style.right = 'calc(20px + 370px)';
+  sidebar.style.width = '180px';
+  sidebar.style.maxHeight = 'calc(90vh - 40px)';
+  sidebar.style.overflowY = 'auto';
+  sidebar.style.background = '#fff';
+  sidebar.style.borderRadius = '12px';
+  sidebar.style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)';
+  sidebar.style.padding = '10px';
+  sidebar.style.display = 'none';
+  sidebar.style.zIndex = '9999';
+  document.body.appendChild(sidebar);
+
+  sessionList = document.createElement('div');
+  sidebar.appendChild(sessionList);
+  const newBtn = document.createElement('button');
+  newBtn.textContent = '+ Nouveau Chat';
+  newBtn.style.marginTop = '8px';
+  newBtn.style.width = '100%';
+  newBtn.onclick = createNewSession;
+  sidebar.appendChild(newBtn);
+
+  renderSessions = function() {
+    if (!sessionList) return;
+    sessionList.innerHTML = '';
+    sessions.forEach(s => {
+      const btn = document.createElement('button');
+      btn.textContent = s.title || s.id;
+      btn.style.display = 'block';
+      btn.style.width = '100%';
+      btn.style.marginBottom = '6px';
+      btn.style.textAlign = 'left';
+      btn.style.padding = '6px 8px';
+      btn.style.border = 'none';
+      btn.style.borderRadius = '6px';
+      btn.style.cursor = 'pointer';
+      if (s.id === currentSessionId) {
+        btn.style.background = config.color;
+        btn.style.color = '#fff';
+      } else {
+        btn.style.background = '#f4f4f4';
+        btn.style.color = '#000';
+      }
+      btn.onclick = () => setCurrentSession(s.id);
+    sessionList.appendChild(btn);
+  });
+  };
+  renderSessions();
 
   const shadow = container.attachShadow({ mode: 'open' });
 
@@ -299,6 +402,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof widget !== "undefined" && widget) widget.style.display = 'flex';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'none';
     isWidgetOpen = true;
+    if (sidebar) sidebar.style.display = isExpanded ? 'block' : 'none';
     setTimeout(() => {
       if (isTextMode && typeof input !== "undefined" && input && input.focus) input.focus();
     }, 300);
@@ -437,6 +541,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     reduceBtn.style.display = 'inline-block';
     if (widget) widget.classList.add('fullscreen-mode');
     if (container) container.classList.add('fullscreen-mode');
+    if (sidebar) sidebar.style.display = 'block';
   };
   reduceBtn.onclick = () => {
     isExpanded = false;
@@ -444,6 +549,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     reduceBtn.style.display = 'none';
     if (widget) widget.classList.remove('fullscreen-mode');
     if (container) container.classList.remove('fullscreen-mode');
+    if (sidebar) sidebar.style.display = 'none';
 
   };
 
@@ -587,8 +693,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   clearHistory.style.textDecoration = "underline";
   clearHistory.onclick = (e) => {
     e.preventDefault();
-    chatHistory = [];
-    localStorage.setItem('chatbotChatHistory', '[]');
+    const s = getCurrentSession();
+    if (s) s.history = [];
+    saveSessions();
     hasOpenedChat = false;
     localStorage.setItem('chatbotHasOpened', 'false');
     if (chatLog) {
@@ -733,7 +840,8 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       expandBtn.style.display = 'inline-block';
       reduceBtn.style.display = 'none';
     }
-    chatHistory.forEach(item => appendMessage(item.msg, item.sender, item.isHTML));
+    const hist = getCurrentSession()?.history || [];
+    hist.forEach(item => appendMessage(item.msg, item.sender, item.isHTML));
   }
 
   function handleMessage(msg) {
@@ -754,8 +862,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
 
     if (suggBox) suggBox.style.display = 'none';
     appendMessage(msg, 'user');
-    chatHistory.push({ msg, sender: 'user', isHTML: false });
-    localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
+    const cur = getCurrentSession();
+    if (cur) cur.history.push({ msg, sender: 'user', isHTML: false });
+    saveSessions();
     notifyHistory();
     showLoader();
     if (currentAudio && !currentAudio.paused) {
@@ -784,8 +893,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
           text = htmlToMarkdown(text);
         }
         const msgEl = appendMessage(text, 'bot', true);
-        chatHistory.push({ msg: text, sender: 'bot', isHTML: true });
-        localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
+        const cur = getCurrentSession();
+        if (cur) cur.history.push({ msg: text, sender: 'bot', isHTML: true });
+        saveSessions();
         notifyHistory();
         if (!isTextMode) {
           if (data.audioUrl) {
@@ -809,8 +919,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
             });
           } else {
             appendMessage("(Réponse vocale indisponible pour ce message)", 'bot');
-            chatHistory.push({ msg: "(Réponse vocale indisponible pour ce message)", sender: 'bot', isHTML: false });
-            localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
+            const cur2 = getCurrentSession();
+            if (cur2) cur2.history.push({ msg: "(Réponse vocale indisponible pour ce message)", sender: 'bot', isHTML: false });
+            saveSessions();
             notifyHistory();
             speakText(data.text || '');
           }
@@ -820,8 +931,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
         hideLoader();
         if (err.message === 'quota_exceeded') return;
         appendMessage("Désolé, le serveur est injoignable.", 'bot');
-        chatHistory.push({ msg: "Désolé, le serveur est injoignable.", sender: 'bot', isHTML: false });
-        localStorage.setItem('chatbotChatHistory', JSON.stringify(chatHistory));
+        const cur3 = getCurrentSession();
+        if (cur3) cur3.history.push({ msg: "Désolé, le serveur est injoignable.", sender: 'bot', isHTML: false });
+        saveSessions();
         notifyHistory();
         showAlert("Erreur : le backend du chatbot n'est pas joignable.");
       });
