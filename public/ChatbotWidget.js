@@ -217,7 +217,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
     isWidgetOpen = false;
-    if (sidebar) sidebar.style.display = 'none';
     if (container) container.style.transform = 'translateY(0)';
     if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
@@ -345,9 +344,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   document.body.appendChild(container);
 
   sidebar = document.createElement('div');
-  sidebar.style.position = 'fixed';
-  sidebar.style.bottom = container.style.bottom;
-  sidebar.style.right = 'calc(20px + 370px)';
+  sidebar.className = 'sidebar';
   sidebar.style.width = '180px';
   sidebar.style.maxHeight = 'calc(90vh - 40px)';
   sidebar.style.overflowY = 'auto';
@@ -355,9 +352,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   sidebar.style.borderRadius = '12px';
   sidebar.style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)';
   sidebar.style.padding = '10px';
-  sidebar.style.display = 'none';
-  sidebar.style.zIndex = '9999';
-  document.body.appendChild(sidebar);
 
   sessionList = document.createElement('div');
   sidebar.appendChild(sessionList);
@@ -440,6 +434,19 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   widget.classList.add('custom-chatbot-widget');
   shadow.appendChild(widget);
 
+  const widgetContainer = document.createElement('div');
+  widgetContainer.className = 'widget-container';
+  widgetContainer.style.display = 'flex';
+  widgetContainer.style.flexDirection = 'row';
+  widgetContainer.style.height = '100%';
+  widget.appendChild(widgetContainer);
+
+  const mainChat = document.createElement('div');
+  mainChat.className = 'main-chat';
+  mainChat.style.display = 'flex';
+  mainChat.style.flexDirection = 'column';
+  mainChat.style.flex = '1';
+
   // Flex layout containers
   const headerContainer = document.createElement('div');
   headerContainer.className = 'chatbot-header';
@@ -457,9 +464,11 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   footerContainer.className = 'chatbot-footer';
   footerContainer.style.flexShrink = '0';
 
-  widget.appendChild(headerContainer);
-  widget.appendChild(bodyContainer);
-  widget.appendChild(footerContainer);
+  mainChat.appendChild(headerContainer);
+  mainChat.appendChild(bodyContainer);
+  mainChat.appendChild(footerContainer);
+  widgetContainer.appendChild(sidebar);
+  widgetContainer.appendChild(mainChat);
 
 
   // === OUVERTURE/FERMETURE PATCHÉE ===
@@ -472,7 +481,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof widget !== "undefined" && widget) widget.style.display = 'flex';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'none';
     isWidgetOpen = true;
-    if (sidebar) sidebar.style.display = isExpanded ? 'block' : 'none';
     setTimeout(() => {
       if (isTextMode && typeof input !== "undefined" && input && input.focus) input.focus();
     }, 300);
@@ -617,16 +625,12 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     expandBtn.style.display = 'none';
     reduceBtn.style.display = 'inline-block';
     if (widget) widget.classList.add('fullscreen-mode');
-    if (container) container.classList.add('fullscreen-mode');
-    if (sidebar) sidebar.style.display = 'block';
   };
   reduceBtn.onclick = () => {
     isExpanded = false;
     expandBtn.style.display = 'inline-block';
     reduceBtn.style.display = 'none';
     if (widget) widget.classList.remove('fullscreen-mode');
-    if (container) container.classList.remove('fullscreen-mode');
-    if (sidebar) sidebar.style.display = 'none';
 
   };
 
@@ -1130,11 +1134,13 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       z-index: 9999;
       padding-bottom: env(safe-area-inset-bottom, 20px);
     }
+    .widget-container { display: flex; }
+    .sidebar { display: none; }
     .custom-chatbot-widget.fullscreen-mode {
       width: 100vw !important;
-      height: calc(100vh - env(safe-area-inset-bottom)) !important;
+      height: 100vh !important;
       max-width: 100vw !important;
-      max-height: calc(100vh - env(safe-area-inset-bottom)) !important;
+      max-height: 100vh !important;
       border-radius: 0 !important;
       padding: 20px !important;
       box-sizing: border-box !important;
@@ -1142,20 +1148,17 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     .custom-chatbot-widget.fullscreen-mode .chat-log {
       max-height: none !important;
     }
+    .custom-chatbot-widget.fullscreen-mode .sidebar {
+      display: block;
+    }
+    @media (max-width: 500px) {
+      .custom-chatbot-widget.fullscreen-mode .sidebar {
+        display: none;
+      }
+    }
   `;
   const demoMsg = '# Exemple de markdown\n\n**Bienvenue** sur le *chatbot*.\n\n- Premier\n- Deuxième\n\n![Image](https://via.placeholder.com/150)\n\n[Visiter le site](https://example.com)';
   appendMessage(demoMsg, 'bot', true);
   shadow.appendChild(style);
 
-  const globalStyle = document.createElement('style');
-  globalStyle.textContent = `
-    #chatbot-widget-container.fullscreen-mode {
-      top: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      bottom: 0 !important;
-      transform: none !important;
-    }
-  `;
-  document.head.appendChild(globalStyle);
 }
