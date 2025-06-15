@@ -14,6 +14,7 @@ const CURRENT_KEY = 'chatbotCurrentSession';
 let sessions = [];
 let currentSessionId;
 let renderHistory = () => {};
+let widgetConfig = {};
 
 function loadScript(src) {
   return new Promise(res => {
@@ -51,6 +52,21 @@ function loadSessions() {
 }
 
 function saveSessions() {
+  const cfg = widgetConfig || {};
+  if (cfg.maxHistory && Number.isFinite(cfg.maxHistory)) {
+    sessions.forEach(s => {
+      if (s.history.length > cfg.maxHistory) {
+        s.history = s.history.slice(-cfg.maxHistory);
+      }
+    });
+  }
+  if (cfg.maxSessions && Number.isFinite(cfg.maxSessions) && sessions.length > cfg.maxSessions) {
+    sessions = sessions.slice(-cfg.maxSessions);
+    if (!sessions.some(s => s.id === currentSessionId)) {
+      currentSessionId = sessions[sessions.length - 1]?.id;
+      if (currentSessionId) localStorage.setItem(CURRENT_KEY, currentSessionId);
+    }
+  }
   localStorage.setItem(SESSION_KEY, JSON.stringify(sessions));
 }
 
@@ -126,6 +142,8 @@ async function loadAndInitChatbot(speechSupported) {
   const scriptTag = document.currentScript || document.querySelector('script[data-client-id]');
   const clientId = scriptTag?.getAttribute('data-client-id') || "novacorp";
   const backendUrl = scriptTag?.getAttribute('data-backend-url') || "https://chatbot-vocal-backend.onrender.com";
+  const maxSessions = parseInt(scriptTag?.getAttribute('data-max-sessions'), 10);
+  const maxHistory = parseInt(scriptTag?.getAttribute('data-max-history') || scriptTag?.getAttribute('data-max-messages'), 10);
   let config = {
     color: "#0078d4",
     logo: null,
@@ -134,7 +152,9 @@ async function loadAndInitChatbot(speechSupported) {
       "Quels sont vos services ?",
       "J’aimerais en savoir plus sur vos tarifs"
     ],
-    rgpdLink: "/politique-confidentialite.html"
+    rgpdLink: "/politique-confidentialite.html",
+    maxSessions: null,
+    maxHistory: null
   };
   try {
     const res = await fetch(`${backendUrl}/config/${clientId}.json`);
@@ -149,6 +169,10 @@ async function loadAndInitChatbot(speechSupported) {
   } catch (e) {
     showAlert("Erreur réseau : la configuration du chatbot n'a pas pu être chargée.");
   }
+  if (Number.isFinite(maxSessions)) config.maxSessions = maxSessions;
+  if (Number.isFinite(maxHistory)) config.maxHistory = maxHistory;
+  widgetConfig = config;
+  window.chatbotWidgetConfig = config;
   initChatbot(config, backendUrl, clientId, speechSupported);
 }
 

@@ -108,3 +108,21 @@ Tailwind when working locally:
 Create React App processes Tailwind automatically during `npm start` and
 `npm run build`.
 
+## Session Storage Limits
+
+`ChatbotWidget.js` stores session history in the browser's local storage. To prevent local storage from growing indefinitely you can provide optional limits via script attributes:
+
+```html
+<script
+  src="/ChatbotWidget.js"
+  data-client-id="my-client"
+  data-max-sessions="10"
+  data-max-history="50">
+</script>
+```
+
+* `data-max-sessions` – maximum number of sessions kept. Older sessions are discarded when the limit is exceeded.
+* `data-max-history` – maximum number of messages stored per session. Only the most recent messages are retained.
+
+If not specified, all sessions and messages are preserved.
+
