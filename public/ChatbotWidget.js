@@ -142,7 +142,7 @@ function showAlert(msg) {
 function initChatbot(config, backendUrl, clientId, speechSupported) {
   // Toutes les variables (comme avant)
   let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input,
-      expandBtn, reduceBtn, sidebar, sessionList,
+      expandBtn, reduceBtn, sessionColumn, sessionList,
       isWidgetOpen = false;
 
   loadSessions();
@@ -161,7 +161,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
     isWidgetOpen = false;
-    if (sidebar) sidebar.style.display = 'none';
     if (container) container.style.transform = 'translateY(0)';
     if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
@@ -288,29 +287,22 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   container.style.zIndex = '9999';
   document.body.appendChild(container);
 
-  sidebar = document.createElement('div');
-  sidebar.style.position = 'fixed';
-  sidebar.style.bottom = container.style.bottom;
-  sidebar.style.right = 'calc(20px + 370px)';
-  sidebar.style.width = '180px';
-  sidebar.style.maxHeight = 'calc(90vh - 40px)';
-  sidebar.style.overflowY = 'auto';
-  sidebar.style.background = '#fff';
-  sidebar.style.borderRadius = '12px';
-  sidebar.style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)';
-  sidebar.style.padding = '10px';
-  sidebar.style.display = 'none';
-  sidebar.style.zIndex = '9999';
-  document.body.appendChild(sidebar);
+  sessionColumn = document.createElement('div');
+  sessionColumn.style.width = '180px';
+  sessionColumn.style.overflowY = 'auto';
+  sessionColumn.style.background = '#fff';
+  sessionColumn.style.borderRight = '1px solid #eee';
+  sessionColumn.style.padding = '10px';
+  sessionColumn.style.borderRadius = '12px 0 0 12px';
 
   sessionList = document.createElement('div');
-  sidebar.appendChild(sessionList);
+  sessionColumn.appendChild(sessionList);
   const newBtn = document.createElement('button');
   newBtn.textContent = '+ Nouveau Chat';
   newBtn.style.marginTop = '8px';
   newBtn.style.width = '100%';
   newBtn.onclick = createNewSession;
-  sidebar.appendChild(newBtn);
+  sessionColumn.appendChild(newBtn);
 
   renderSessions = function() {
     if (!sessionList) return;
@@ -334,8 +326,8 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
         btn.style.color = '#000';
       }
       btn.onclick = () => setCurrentSession(s.id);
-    sessionList.appendChild(btn);
-  });
+      sessionList.appendChild(btn);
+    });
   };
   renderSessions();
 
@@ -387,9 +379,22 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   footerContainer.className = 'chatbot-footer';
   footerContainer.style.flexShrink = '0';
 
-  widget.appendChild(headerContainer);
-  widget.appendChild(bodyContainer);
-  widget.appendChild(footerContainer);
+  const layout = document.createElement('div');
+  layout.style.display = 'flex';
+  layout.style.height = '100%';
+  widget.appendChild(layout);
+
+  layout.appendChild(sessionColumn);
+
+  const chatContainer = document.createElement('div');
+  chatContainer.style.display = 'flex';
+  chatContainer.style.flexDirection = 'column';
+  chatContainer.style.flex = '1';
+  layout.appendChild(chatContainer);
+
+  chatContainer.appendChild(headerContainer);
+  chatContainer.appendChild(bodyContainer);
+  chatContainer.appendChild(footerContainer);
 
 
   // === OUVERTURE/FERMETURE PATCHÉE ===
@@ -402,7 +407,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof widget !== "undefined" && widget) widget.style.display = 'flex';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'none';
     isWidgetOpen = true;
-    if (sidebar) sidebar.style.display = isExpanded ? 'block' : 'none';
     setTimeout(() => {
       if (isTextMode && typeof input !== "undefined" && input && input.focus) input.focus();
     }, 300);
@@ -548,7 +552,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     reduceBtn.style.display = 'inline-block';
     if (widget) widget.classList.add('fullscreen-mode');
     if (container) container.classList.add('fullscreen-mode');
-    if (sidebar) sidebar.style.display = 'block';
   };
   reduceBtn.onclick = () => {
     isExpanded = false;
@@ -556,7 +559,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     reduceBtn.style.display = 'none';
     if (widget) widget.classList.remove('fullscreen-mode');
     if (container) container.classList.remove('fullscreen-mode');
-    if (sidebar) sidebar.style.display = 'none';
 
   };
 

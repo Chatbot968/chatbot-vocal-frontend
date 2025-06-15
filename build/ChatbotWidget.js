@@ -112,7 +112,7 @@ function showAlert(msg) {
 
 function initChatbot(config, backendUrl, clientId, speechSupported) {
   // Toutes les variables (comme avant)
-  let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, expandBtn, reduceBtn, sidebar, sessionList, isWidgetOpen = false;
+  let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input, expandBtn, reduceBtn, sessionColumn, sessionList, isWidgetOpen = false;
 
   loadSessions();
   if(sessions.length===0){
@@ -180,7 +180,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
     isWidgetOpen = false;
-    if(sidebar) sidebar.style.display='none';
 
 
     if (typeof sizeToggleBtn !== "undefined" && sizeToggleBtn) sizeToggleBtn.textContent = '🗖';
@@ -327,29 +326,22 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   container.style.zIndex = '9999';
   document.body.appendChild(container);
 
-  sidebar=document.createElement('div');
-  sidebar.style.position='fixed';
-  sidebar.style.bottom=container.style.bottom;
-  sidebar.style.right='calc(20px + 370px)';
-  sidebar.style.width='180px';
-  sidebar.style.maxHeight='calc(90vh - 40px)';
-  sidebar.style.overflowY='auto';
-  sidebar.style.background='#fff';
-  sidebar.style.borderRadius='12px';
-  sidebar.style.boxShadow='0 4px 20px rgba(0,0,0,0.1)';
-  sidebar.style.padding='10px';
-  sidebar.style.display='none';
-  sidebar.style.zIndex='9999';
-  document.body.appendChild(sidebar);
+  sessionColumn=document.createElement('div');
+  sessionColumn.style.width='180px';
+  sessionColumn.style.overflowY='auto';
+  sessionColumn.style.background='#fff';
+  sessionColumn.style.borderRight='1px solid #eee';
+  sessionColumn.style.padding='10px';
+  sessionColumn.style.borderRadius='12px 0 0 12px';
 
   sessionList=document.createElement('div');
-  sidebar.appendChild(sessionList);
+  sessionColumn.appendChild(sessionList);
   const newBtn=document.createElement('button');
   newBtn.textContent='+ Nouveau Chat';
   newBtn.style.marginTop='8px';
   newBtn.style.width='100%';
   newBtn.onclick=createNewSession;
-  sidebar.appendChild(newBtn);
+  sessionColumn.appendChild(newBtn);
 
   renderSessions=function(){
     if(!sessionList) return;
@@ -382,6 +374,19 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   widget.classList.add('custom-chatbot-widget');
   shadow.appendChild(widget);
 
+  const layout=document.createElement('div');
+  layout.style.display='flex';
+  layout.style.height='100%';
+  widget.appendChild(layout);
+
+  layout.appendChild(sessionColumn);
+
+  const chatContainer=document.createElement('div');
+  chatContainer.style.display='flex';
+  chatContainer.style.flexDirection='column';
+  chatContainer.style.flex='1';
+  layout.appendChild(chatContainer);
+
   // === RESPONSIVITÉ PATCHÉE ===
   window.addEventListener('resize', adaptMobile);
   window.addEventListener('orientationchange', adaptMobile);
@@ -396,7 +401,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof widget !== "undefined" && widget) widget.style.display = 'flex';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'none';
     isWidgetOpen = true;
-    if(sidebar) sidebar.style.display = isExpanded ? 'block' : 'none';
     adaptMobile();
     setTimeout(() => {
       if (isTextMode && typeof input !== "undefined" && input && input.focus) input.focus();
@@ -453,7 +457,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   btnWrap.style.gap = '6px';
   btnWrap.appendChild(closeBtn);
   header.appendChild(btnWrap);
-  widget.appendChild(header);
 
   function getWelcomeMsg() {
     const h = new Date().getHours();
@@ -466,7 +469,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   title.innerHTML = getWelcomeMsg();
   title.style.margin = '16px 0';
   title.style.color = '#fff';
-  widget.appendChild(title);
 
   suggBox = document.createElement('div');
   Object.assign(suggBox.style, {
@@ -482,7 +484,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     item.onclick = () => handleMessage(s);
     suggBox.appendChild(item);
   });
-  widget.appendChild(suggBox);
+  chatContainer.appendChild(header);
+  chatContainer.appendChild(title);
+  chatContainer.appendChild(suggBox);
 
   chatLog = document.createElement('div');
   chatLog.classList.add('chat-log');
@@ -560,7 +564,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       container.style.bottom = '0';
       container.style.transform = 'none';
     }
-    if(sidebar) sidebar.style.display='block';
+      
   };
   reduceBtn.onclick = () => {
     isExpanded = false;
@@ -586,12 +590,12 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       container.style.left = '';
       container.style.transform = 'translateY(0)';
     }
-    if(sidebar) sidebar.style.display='none';
+
 
   };
 
 
-  widget.appendChild(chatLog);
+  chatContainer.appendChild(chatLog);
 
   inputBox = document.createElement('div');
   inputBox.style.display = hasOpenedChat ? 'flex' : 'none';
@@ -619,7 +623,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   });
 
   inputBox.appendChild(input);
-  widget.appendChild(inputBox);
+  chatContainer.appendChild(inputBox);
 
   vocalCtaBox = document.createElement('div');
   vocalCtaBox.style.display = hasOpenedChat ? 'none' : 'flex';
@@ -653,7 +657,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   };
 
   vocalCtaBox.appendChild(vocalCtaBtn);
-  if (speechSupported) widget.appendChild(vocalCtaBox);
+  if (speechSupported) chatContainer.appendChild(vocalCtaBox);
 
   const footerNav = document.createElement('div');
   footerNav.style.display = 'flex';
@@ -703,7 +707,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   }
   if (speechSupported) footerNav.appendChild(vocalTab);
   footerNav.appendChild(textTab);
-  widget.appendChild(footerNav);
+  chatContainer.appendChild(footerNav);
 
   const rgpd = document.createElement('a');
   rgpd.href = config.rgpdLink;
@@ -712,7 +716,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   Object.assign(rgpd.style, {
     fontSize: '11px', color: '#eee', marginTop: '6px', textAlign: 'right'
   });
-  widget.appendChild(rgpd);
+  chatContainer.appendChild(rgpd);
 
   const clearHistory = document.createElement('a');
   clearHistory.href = "#";
