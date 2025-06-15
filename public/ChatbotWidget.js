@@ -379,6 +379,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   chatLog.style.position = 'relative';
   chatLog.style.transition = 'max-height 0.25s cubic-bezier(0.4,0.3,0.6,1)';
   chatLog.style.display = hasOpenedChat ? '' : 'none';
+  chatLog.classList.add('chat-log');
 
   expandBtn = document.createElement('button');
   expandBtn.innerHTML = '🗖';
@@ -432,51 +433,17 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   let isExpanded = false;
   expandBtn.onclick = () => {
     isExpanded = true;
-    if (chatLog) {
-      chatLog.style.maxHeight = 'none';
-      chatLog.style.minHeight = '0';
-      chatLog.style.width = 'auto';
-    }
     expandBtn.style.display = 'none';
     reduceBtn.style.display = 'inline-block';
-    if (widget) {
-      widget.style.width = '100vw';
-      widget.style.maxWidth = '100vw';
-      widget.style.height = '100vh';
-      widget.style.maxHeight = '100vh';
-      widget.style.borderRadius = '0';
-    }
-    if (container) {
-      container.style.top = '0';
-      container.style.left = '0';
-      container.style.right = '0';
-      container.style.bottom = '0';
-      container.style.transform = 'none';
-    }
+    if (widget) widget.classList.add('fullscreen-mode');
+    if (container) container.classList.add('fullscreen-mode');
   };
   reduceBtn.onclick = () => {
     isExpanded = false;
-    if (chatLog) {
-      chatLog.style.maxHeight = '160px';
-      chatLog.style.minHeight = '';
-      chatLog.style.width = '';
-    }
     expandBtn.style.display = 'inline-block';
     reduceBtn.style.display = 'none';
-    if (widget) {
-      widget.style.width = '350px';
-      widget.style.maxWidth = '90vw';
-      widget.style.height = 'auto';
-      widget.style.maxHeight = 'calc(90vh - 40px)';
-      widget.style.borderRadius = '20px';
-    }
-    if (container) {
-      container.style.bottom = 'calc(20px + env(safe-area-inset-bottom))';
-      container.style.right = '20px';
-      container.style.top = '';
-      container.style.left = '';
-      container.style.transform = 'translateY(0)';
-    }
+    if (widget) widget.classList.remove('fullscreen-mode');
+    if (container) container.classList.remove('fullscreen-mode');
 
   };
 
@@ -971,8 +938,31 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       z-index: 9999;
       padding-bottom: env(safe-area-inset-bottom, 20px);
     }
+    .custom-chatbot-widget.fullscreen-mode {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      border-radius: 0 !important;
+      padding: 20px !important;
+    }
+    .custom-chatbot-widget.fullscreen-mode .chat-log {
+      max-height: none !important;
+    }
   `;
   const demoMsg = '# Exemple de markdown\n\n**Bienvenue** sur le *chatbot*.\n\n- Premier\n- Deuxième\n\n![Image](https://via.placeholder.com/150)\n\n[Visiter le site](https://example.com)';
   appendMessage(demoMsg, 'bot', true);
   shadow.appendChild(style);
+
+  const globalStyle = document.createElement('style');
+  globalStyle.textContent = `
+    #chatbot-widget-container.fullscreen-mode {
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      transform: none !important;
+    }
+  `;
+  document.head.appendChild(globalStyle);
 }
