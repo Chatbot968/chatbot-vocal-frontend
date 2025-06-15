@@ -423,20 +423,27 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   // ========== UI DU CHATBOT (header, etc...) ==========
   const header = document.createElement('div');
   header.style.display = 'flex';
-  header.style.justifyContent = 'space-between';
+  header.style.justifyContent = 'center';
   header.style.alignItems = 'center';
+  header.style.position = 'relative';
 
   const logo = document.createElement('img');
   logo.src = config.logoUrl || config.logo || '';
   logo.alt = 'Logo';
-  logo.style.height = '30px';
+  logo.style.height = '50px';
   logo.onerror = () => { logo.style.display = "none"; };
   header.appendChild(logo);
 
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '✕';
   Object.assign(closeBtn.style, {
-    border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer', zIndex: '100001'
+    border: 'none',
+    background: 'none',
+    fontSize: '20px',
+    cursor: 'pointer',
+    zIndex: '100001',
+    position: 'absolute',
+    right: '0'
   });
   closeBtn.onclick = closeWidget;
   header.appendChild(closeBtn);
@@ -987,6 +994,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       }
       .custom-chatbot-widget {
         overflow: auto !important;
+      }
+      .chatbot-header img {
+        height: 40px;
       }
     }
     .custom-chatbot-widget img { max-width: 100%; border-radius: 10px; margin-top: 6px; display: block; }
