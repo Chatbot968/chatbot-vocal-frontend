@@ -249,7 +249,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   // === Widget panel principal ===
   widget = document.createElement('div');
   Object.assign(widget.style, {
-    display: 'none',
+    display: 'flex',
     flexDirection: 'column',
     width: '350px',
     maxWidth: '90vw',
