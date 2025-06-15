@@ -107,6 +107,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
     isWidgetOpen = false;
+    if (container) container.style.transform = 'translateY(0)';
     if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
     if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
