@@ -105,8 +105,6 @@ function createNewSession() {
   sessions.push(session);
   saveSessions();
   setCurrentSession(session.id);
-  hasOpenedChat = false;
-  localStorage.setItem('chatbotHasOpened', 'false');
   renderHistory();
 }
 
@@ -313,10 +311,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     window.dispatchEvent(new Event('chatHistoryUpdate'));
   }
   notifyHistory();
-  let hasOpenedChat = false;
-  try {
-    hasOpenedChat = !!JSON.parse(localStorage.getItem('chatbotHasOpened') || 'false');
-  } catch (e) {}
+
 
   let quotaExceeded = false;
   try {
@@ -473,14 +468,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       if (isTextMode && typeof input !== "undefined" && input && input.focus) input.focus();
     }, 300);
 
-    if (hasOpenedChat) {
-      if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = '';
-      if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = 'none';
-      if (typeof renderHistory === "function") renderHistory();
-    } else {
-      if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
-      if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = '';
-    }
+    if (typeof renderHistory === "function") renderHistory();
     updateModeUI();
   }
   launcher.onclick = openWidget;
@@ -555,7 +543,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   chatLog.style.borderRadius = '10px';
   chatLog.style.position = 'relative';
   chatLog.style.transition = 'max-height 0.25s cubic-bezier(0.4,0.3,0.6,1)';
-  chatLog.style.display = hasOpenedChat ? '' : 'none';
+  chatLog.style.display = 'none';
   chatLog.classList.add('chat-log');
 
   expandBtn = document.createElement('button');
@@ -630,7 +618,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
 
   inputBox = document.createElement('div');
   inputBox.classList.add('chat-input-box');
-  inputBox.style.display = hasOpenedChat ? 'flex' : 'none';
+  inputBox.style.display = 'none';
   inputBox.style.background = '#fff';
   inputBox.style.borderRadius = '16px';
   inputBox.style.alignItems = 'center';
@@ -661,7 +649,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   footerContainer.appendChild(inputBox);
 
   vocalCtaBox = document.createElement('div');
-  vocalCtaBox.style.display = hasOpenedChat ? 'none' : 'flex';
+  vocalCtaBox.style.display = 'flex';
   vocalCtaBox.style.justifyContent = 'center';
   vocalCtaBox.style.alignItems = 'center';
   vocalCtaBox.style.margin = '12px 0 0 0';
@@ -765,8 +753,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     const s = getCurrentSession();
     if (s) s.history = [];
     saveSessions();
-    hasOpenedChat = false;
-    localStorage.setItem('chatbotHasOpened', 'false');
     if (chatLog) {
       chatLog.innerHTML = '';
       if (expandBtn) chatLog.appendChild(expandBtn);
@@ -910,18 +896,14 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       reduceBtn.style.display = 'none';
     }
     const hist = getCurrentSession()?.history || [];
-    if (hist.length === 0) {
-      chatLog.style.display = 'none';
-      if (inputBox) inputBox.style.display = 'none';
-      if (vocalCtaBox) vocalCtaBox.style.display = 'none';
-      if (suggBox) suggBox.style.display = '';
-    } else {
-      chatLog.style.display = '';
-      if (suggBox) suggBox.style.display = 'none';
-      if (inputBox) inputBox.style.display = isTextMode ? 'flex' : 'none';
-      if (vocalCtaBox) vocalCtaBox.style.display = isTextMode ? 'none' : 'flex';
-      hist.forEach(item => appendMessage(item.msg, item.sender, item.isHTML));
-    }
+    const hasHistory = hist.length > 0;
+
+    chatLog.style.display = hasHistory ? '' : 'none';
+    suggBox.style.display = hasHistory ? 'none' : '';
+    inputBox.style.display = (isTextMode && hasHistory) ? 'flex' : 'none';
+    vocalCtaBox.style.display = (!isTextMode && hasHistory) ? 'flex' : 'none';
+
+    hist.forEach(item => appendMessage(item.msg, item.sender, item.isHTML));
   }
 
   function handleMessage(msg) {
@@ -930,18 +912,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       return;
     }
     if (!chatLog) return;
-    if (!hasOpenedChat) {
-      hasOpenedChat = true;
-      localStorage.setItem('chatbotHasOpened', 'true');
-      if (chatLog) chatLog.style.display = '';
-      if (inputBox) inputBox.style.display = isTextMode ? 'flex' : 'none';
-      if (vocalCtaBox) vocalCtaBox.style.display = isTextMode ? 'none' : 'flex';
-      if (suggBox) suggBox.style.display = 'none';
-      renderHistory();
-    }
-
     if (suggBox) suggBox.style.display = 'none';
     appendMessage(msg, 'user');
+    renderHistory();
     const cur = getCurrentSession();
     if (cur) cur.history.push({ msg, sender: 'user', isHTML: false });
     saveSessions();
@@ -1022,6 +995,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
 
 
   // PATCH DIEGO : widget TOUJOURS fermé au démarrage, même si historique
+  renderHistory();
   closeWidget();
 
   updateModeUI();
