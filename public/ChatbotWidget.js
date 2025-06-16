@@ -107,19 +107,7 @@ function createNewSession() {
   setCurrentSession(session.id);
   hasOpenedChat = false;
   localStorage.setItem('chatbotHasOpened', 'false');
-  if (chatLog) {
-    chatLog.innerHTML = '';
-    if (typeof expandBtn !== 'undefined' && expandBtn) chatLog.appendChild(expandBtn);
-    if (typeof reduceBtn !== 'undefined' && reduceBtn) chatLog.appendChild(reduceBtn);
-    if (expandBtn) expandBtn.style.display = 'inline-block';
-    if (reduceBtn) reduceBtn.style.display = 'none';
-    chatLog.style.display = 'none';
-  }
-  if (inputBox) inputBox.style.display = 'none';
-  if (vocalCtaBox) vocalCtaBox.style.display = 'none';
-  if (suggBox) suggBox.style.display = '';
-  notifyHistory();
-  if (typeof renderSessions === 'function') renderSessions();
+  renderHistory();
 }
 
 let renderSessions = () => {};
@@ -922,7 +910,18 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       reduceBtn.style.display = 'none';
     }
     const hist = getCurrentSession()?.history || [];
-    hist.forEach(item => appendMessage(item.msg, item.sender, item.isHTML));
+    if (hist.length === 0) {
+      chatLog.style.display = 'none';
+      if (inputBox) inputBox.style.display = 'none';
+      if (vocalCtaBox) vocalCtaBox.style.display = 'none';
+      if (suggBox) suggBox.style.display = '';
+    } else {
+      chatLog.style.display = '';
+      if (suggBox) suggBox.style.display = 'none';
+      if (inputBox) inputBox.style.display = isTextMode ? 'flex' : 'none';
+      if (vocalCtaBox) vocalCtaBox.style.display = isTextMode ? 'none' : 'flex';
+      hist.forEach(item => appendMessage(item.msg, item.sender, item.isHTML));
+    }
   }
 
   function handleMessage(msg) {
@@ -1144,16 +1143,38 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       border-radius: 0 !important;
       padding: 20px !important;
       box-sizing: border-box !important;
+      display: flex !important;
+      flex-direction: column !important;
+    }
+    .custom-chatbot-widget.fullscreen-mode .widget-container {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      overflow: hidden;
+    }
+    .custom-chatbot-widget.fullscreen-mode .sidebar {
+      display: block !important;
+      width: 200px;
+      overflow-y: auto;
+      flex-shrink: 0;
+      border-right: 1px solid #ddd;
+      background: #fff;
+      padding: 10px;
+    }
+    .custom-chatbot-widget.fullscreen-mode .main-chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
     .custom-chatbot-widget.fullscreen-mode .chat-log {
       max-height: none !important;
+      flex: 1;
+      overflow-y: auto;
     }
-    .custom-chatbot-widget.fullscreen-mode .sidebar {
-      display: block;
-    }
-    @media (max-width: 500px) {
+    @media (max-width: 600px) {
       .custom-chatbot-widget.fullscreen-mode .sidebar {
-        display: none;
+        display: none !important;
       }
     }
   `;
