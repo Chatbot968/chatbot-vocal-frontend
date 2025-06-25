@@ -435,7 +435,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   headerContainer.className = 'chatbot-header';
   headerContainer.style.flexShrink = '0';
   Object.assign(headerContainer.style, {
-    background: `linear-gradient(90deg, ${config.color}, #111)`,
+    background: config.color,
     padding: '10px',
     borderRadius: '16px 16px 0 0'
   });
