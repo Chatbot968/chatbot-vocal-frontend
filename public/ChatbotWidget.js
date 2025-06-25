@@ -326,6 +326,33 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   container.style.zIndex = '9999';
   document.body.appendChild(container);
 
+  const defaultContainerStyle = {
+    top: container.style.top || '',
+    right: container.style.right || '',
+    bottom: container.style.bottom || '',
+    left: container.style.left || '',
+    width: container.style.width || '',
+    height: container.style.height || ''
+  };
+
+  function setContainerFullscreen(active) {
+    if (active) {
+      container.style.top = '0';
+      container.style.right = '0';
+      container.style.bottom = '0';
+      container.style.left = '0';
+      container.style.width = '100vw';
+      container.style.height = '100vh';
+    } else {
+      container.style.top = defaultContainerStyle.top;
+      container.style.right = defaultContainerStyle.right;
+      container.style.bottom = defaultContainerStyle.bottom;
+      container.style.left = defaultContainerStyle.left;
+      container.style.width = defaultContainerStyle.width;
+      container.style.height = defaultContainerStyle.height;
+    }
+  }
+
   sidebar = document.createElement('div');
   sidebar.className = 'sidebar';
   sidebar.style.width = '180px';
@@ -512,11 +539,13 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       expandBtn.style.display = 'inline-block';
       reduceBtn.style.display = 'none';
       if (widget) widget.classList.remove('fullscreen-mode');
+      setContainerFullscreen(false);
     } else {
       isExpanded = true;
       expandBtn.style.display = 'none';
       reduceBtn.style.display = 'inline-block';
       if (widget) widget.classList.add('fullscreen-mode');
+      setContainerFullscreen(true);
     }
   };
   actions.appendChild(enlargeBtn);
@@ -631,12 +660,14 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     expandBtn.style.display = 'none';
     reduceBtn.style.display = 'inline-block';
     if (widget) widget.classList.add('fullscreen-mode');
+    setContainerFullscreen(true);
   };
   reduceBtn.onclick = () => {
     isExpanded = false;
     expandBtn.style.display = 'inline-block';
     reduceBtn.style.display = 'none';
     if (widget) widget.classList.remove('fullscreen-mode');
+    setContainerFullscreen(false);
 
   };
 
