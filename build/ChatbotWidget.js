@@ -80,6 +80,8 @@ function setCurrentSession(id) {
   if (typeof renderHistory === 'function') renderHistory();
   if (typeof renderSessions === 'function') renderSessions();
   saveSessions();
+  window.chatHistory = getCurrentSession()?.history.slice() || [];
+  window.dispatchEvent(new Event('chatHistoryUpdate'));
 }
 
 function deleteSession(id) {
@@ -619,23 +621,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
 
   inputBox.appendChild(input);
 
-  const sendBtn = document.createElement('button');
-  sendBtn.textContent = 'Envoyer';
-  Object.assign(sendBtn.style, {
-    border: 'none',
-    background: 'none',
-    fontSize: '20px',
-    color: config.color,
-    cursor: 'pointer',
-    marginLeft: '6px'
-  });
-  sendBtn.onclick = () => {
-    if (input.value.trim()) {
-      handleMessage(input.value);
-      input.value = '';
-    }
-  };
-  inputBox.appendChild(sendBtn);
+  // bouton d'envoi supprimé : envoi uniquement via la touche Entrée
   footerContainer.appendChild(inputBox);
 
   vocalCtaBox = document.createElement('div');
@@ -899,12 +885,11 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     }
     if (!chatLog) return;
     if (suggBox) suggBox.style.display = 'none';
-    appendMessage(msg, 'user');
-    renderHistory();
     const cur = getCurrentSession();
     if (cur) cur.history.push({ msg, sender: 'user', isHTML: false });
     saveSessions();
     notifyHistory();
+    renderHistory();
     showLoader();
     if (currentAudio && !currentAudio.paused) {
       currentAudio.pause();
