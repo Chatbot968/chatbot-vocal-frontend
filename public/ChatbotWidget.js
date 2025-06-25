@@ -215,15 +215,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
     isWidgetOpen = false;
     isExpanded = false;
+    setContainerFullscreen(false);
     if (typeof expandBtn !== "undefined" && expandBtn) expandBtn.style.display = 'inline-block';
     if (typeof reduceBtn !== "undefined" && reduceBtn) reduceBtn.style.display = 'none';
-    if (container) {
-      container.style.transform = 'translateY(0)';
-      container.style.bottom = 'calc(20px + env(safe-area-inset-bottom))';
-      container.style.right = '20px';
-      container.style.top = '';
-      container.style.left = '';
-    }
     if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
     if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
@@ -260,6 +254,23 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
     if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
     if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = '';
+  }
+
+  function setContainerFullscreen(full) {
+    if (!container) return;
+    if (full) {
+      container.style.top = '0';
+      container.style.left = '0';
+      container.style.right = '0';
+      container.style.bottom = '0';
+      container.style.transform = 'none';
+    } else {
+      container.style.transform = 'translateY(0)';
+      container.style.bottom = 'calc(20px + env(safe-area-inset-bottom))';
+      container.style.right = '20px';
+      container.style.top = '';
+      container.style.left = '';
+    }
   }
 
   let recognition = null;
@@ -532,6 +543,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       if (isExpanded) widget.classList.add("fullscreen-mode");
       else widget.classList.remove("fullscreen-mode");
     }
+    setContainerFullscreen(isExpanded);
   };
   actions.appendChild(enlargeBtn);
 
