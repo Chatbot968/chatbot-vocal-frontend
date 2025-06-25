@@ -184,8 +184,8 @@ function showAlert(msg) {
 function initChatbot(config, backendUrl, clientId, speechSupported) {
   // Toutes les variables (comme avant)
   let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input,
-      expandBtn, reduceBtn, sidebar, sessionList,
-      isWidgetOpen = false;
+      sidebar, sessionList,
+      isWidgetOpen = false, isExpanded = false;
 
   loadSessions();
   if (sessions.length === 0) {
@@ -507,16 +507,10 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     cursor: 'pointer'
   });
   enlargeBtn.onclick = () => {
-    if (isExpanded) {
-      isExpanded = false;
-      expandBtn.style.display = 'inline-block';
-      reduceBtn.style.display = 'none';
-      if (widget) widget.classList.remove('fullscreen-mode');
-    } else {
-      isExpanded = true;
-      expandBtn.style.display = 'none';
-      reduceBtn.style.display = 'inline-block';
-      if (widget) widget.classList.add('fullscreen-mode');
+    isExpanded = !isExpanded;
+    if (widget) {
+      if (isExpanded) widget.classList.add("fullscreen-mode");
+      else widget.classList.remove("fullscreen-mode");
     }
   };
   actions.appendChild(enlargeBtn);
@@ -575,75 +569,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   chatLog.style.transition = 'max-height 0.25s cubic-bezier(0.4,0.3,0.6,1)';
   chatLog.style.display = 'none';
   chatLog.classList.add('chat-log');
-
-  expandBtn = document.createElement('button');
-  expandBtn.innerHTML = '🗖';
-  expandBtn.title = 'Agrandir';
-  Object.assign(expandBtn.style, {
-    position: 'absolute',
-    top: '8px',
-    right: '10px',
-
-    padding: '2px 6px',
-    borderRadius: '6px',
-
-    background: '#fff',
-    border: 'none',
-    color: '#888',
-    fontSize: '18px',
-    cursor: 'pointer',
-
-    zIndex: '10',
-    padding: '2px 6px',
-    borderRadius: '6px'
-
-  });
-  chatLog.appendChild(expandBtn);
-
-  reduceBtn = document.createElement('button');
-  reduceBtn.innerHTML = '🗕';
-  reduceBtn.title = 'Réduire';
-  Object.assign(reduceBtn.style, {
-    position: 'absolute',
-    top: '8px',
-    right: '10px',
-
-    padding: '2px 6px',
-    borderRadius: '6px',
-
-    background: '#fff',
-    border: 'none',
-    color: '#888',
-    fontSize: '18px',
-    cursor: 'pointer',
-    zIndex: '10',
-
-    padding: '2px 6px',
-    borderRadius: '6px',
-
-    display: 'none'
-  });
-  chatLog.appendChild(reduceBtn);
-
-  let isExpanded = false;
-  expandBtn.onclick = () => {
-    isExpanded = true;
-    expandBtn.style.display = 'none';
-    reduceBtn.style.display = 'inline-block';
-    if (widget) widget.classList.add('fullscreen-mode');
-  };
-  reduceBtn.onclick = () => {
-    isExpanded = false;
-    expandBtn.style.display = 'inline-block';
-    reduceBtn.style.display = 'none';
-    if (widget) widget.classList.remove('fullscreen-mode');
-
-  };
-
- 
-
-
-
   bodyContainer.appendChild(chatLog);
 
   inputBox = document.createElement('div');
@@ -810,15 +735,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     saveSessions();
     if (chatLog) {
       chatLog.innerHTML = '';
-      if (expandBtn) chatLog.appendChild(expandBtn);
-      if (reduceBtn) chatLog.appendChild(reduceBtn);
-      if (isExpanded) {
-        expandBtn.style.display = 'none';
-        reduceBtn.style.display = 'inline-block';
-      } else {
-        expandBtn.style.display = 'inline-block';
-        reduceBtn.style.display = 'none';
-      }
     }
     if (chatLog) chatLog.style.display = 'none';
     if (inputBox) inputBox.style.display = 'none';
@@ -955,15 +871,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   function renderHistory() {
     if (!chatLog) return;
     chatLog.innerHTML = '';
-    if (expandBtn) chatLog.appendChild(expandBtn);
-    if (reduceBtn) chatLog.appendChild(reduceBtn);
-    if (isExpanded) {
-      expandBtn.style.display = 'none';
-      reduceBtn.style.display = 'inline-block';
-    } else {
-      expandBtn.style.display = 'inline-block';
-      reduceBtn.style.display = 'none';
-    }
     const hist = getCurrentSession()?.history || [];
     const hasHistory = hist.length > 0;
 
