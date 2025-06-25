@@ -540,19 +540,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
 
   headerContainer.appendChild(header);
 
-  function getWelcomeMsg() {
-    const h = new Date().getHours();
-    if (h < 6) return "🌙 Bonsoir !<br><strong>Que puis-je faire pour vous ?</strong>";
-    if (h < 12) return "☀️ Bonjour !<br><strong>Que puis-je faire pour vous ?</strong>";
-    if (h < 18) return "👋 Bonjour !<br><strong>Que puis-je faire pour vous ?</strong>";
-    return "🌙 Bonsoir !<br><strong>Que puis-je faire pour vous ?</strong>";
-  }
-  const title = document.createElement('h2');
-  title.innerHTML = getWelcomeMsg();
-  title.style.margin = '16px 0';
-  title.style.color = '#fff';
-  headerContainer.appendChild(title);
-
   suggBox = document.createElement('div');
   Object.assign(suggBox.style, {
     background: '#fff', borderRadius: '12px', padding: '12px',
@@ -1143,8 +1130,6 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       }
     }
   `;
-  const demoMsg = '# Exemple de markdown\n\n**Bienvenue** sur le *chatbot*.\n\n- Premier\n- Deuxième\n\n![Image](https://via.placeholder.com/150)\n\n[Visiter le site](https://example.com)';
-  appendMessage(demoMsg, 'bot', true);
   shadow.appendChild(style);
 
 }
