@@ -409,7 +409,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     borderRadius: '20px',
     boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
     padding: '20px',
-    fontFamily: 'sans-serif',
+    fontFamily: 'system-ui, "Segoe UI", sans-serif',
     height: 'auto',
     maxHeight: 'calc(90vh - 40px)',
     overflow: 'hidden'
@@ -434,6 +434,11 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   const headerContainer = document.createElement('div');
   headerContainer.className = 'chatbot-header';
   headerContainer.style.flexShrink = '0';
+  Object.assign(headerContainer.style, {
+    background: `linear-gradient(90deg, ${config.color}, #111)`,
+    padding: '10px',
+    borderRadius: '16px 16px 0 0'
+  });
 
   const bodyContainer = document.createElement('div');
   bodyContainer.className = 'chatbot-body';
@@ -477,7 +482,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   // ========== UI DU CHATBOT (header, etc...) ==========
   const header = document.createElement('div');
   header.style.display = 'flex';
-  header.style.justifyContent = 'center';
+  header.style.justifyContent = 'space-between';
   header.style.alignItems = 'center';
   header.style.position = 'relative';
 
@@ -488,19 +493,44 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   logo.onerror = () => { logo.style.display = "none"; };
   header.appendChild(logo);
 
+  const actions = document.createElement('div');
+  actions.style.display = 'flex';
+  actions.style.gap = '6px';
+  header.appendChild(actions);
+
+  const enlargeBtn = document.createElement('button');
+  enlargeBtn.textContent = '↗️';
+  Object.assign(enlargeBtn.style, {
+    border: 'none',
+    background: 'none',
+    fontSize: '18px',
+    cursor: 'pointer'
+  });
+  enlargeBtn.onclick = () => {
+    if (isExpanded) {
+      isExpanded = false;
+      expandBtn.style.display = 'inline-block';
+      reduceBtn.style.display = 'none';
+      if (widget) widget.classList.remove('fullscreen-mode');
+    } else {
+      isExpanded = true;
+      expandBtn.style.display = 'none';
+      reduceBtn.style.display = 'inline-block';
+      if (widget) widget.classList.add('fullscreen-mode');
+    }
+  };
+  actions.appendChild(enlargeBtn);
+
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '✕';
   Object.assign(closeBtn.style, {
     border: 'none',
     background: 'none',
     fontSize: '20px',
-    cursor: 'pointer',
-    zIndex: '100001',
-    position: 'absolute',
-    right: '0'
+    cursor: 'pointer'
   });
   closeBtn.onclick = closeWidget;
-  header.appendChild(closeBtn);
+  actions.appendChild(closeBtn);
 
   headerContainer.appendChild(header);
 
@@ -620,13 +650,19 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   inputBox.classList.add('chat-input-box');
   inputBox.style.display = 'none';
   inputBox.style.background = '#fff';
-  inputBox.style.borderRadius = '16px';
+  inputBox.style.borderRadius = '30px';
   inputBox.style.alignItems = 'center';
   inputBox.style.overflow = 'hidden';
-  inputBox.style.padding = '0 4px';
+  inputBox.style.padding = '4px 8px';
   inputBox.style.position = 'sticky';
   inputBox.style.bottom = '0';
   inputBox.style.zIndex = '10';
+  inputBox.style.boxShadow = '0 2px 6px rgba(0,0,0,0.15)';
+
+  const micIcon = document.createElement('span');
+  micIcon.textContent = '📢';
+  micIcon.style.marginRight = '6px';
+  inputBox.appendChild(micIcon);
 
   input = document.createElement('input');
   input.placeholder = 'Votre message...';
@@ -635,7 +671,8 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     padding: '10px',
     border: 'none',
     outline: 'none',
-    minHeight: '44px'
+    minHeight: '44px',
+    background: 'transparent'
   });
 
   input.addEventListener('keydown', (e) => {
@@ -646,6 +683,24 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   });
 
   inputBox.appendChild(input);
+
+  const sendBtn = document.createElement('button');
+  sendBtn.textContent = '✈️';
+  Object.assign(sendBtn.style, {
+    border: 'none',
+    background: 'none',
+    fontSize: '20px',
+    color: config.color,
+    cursor: 'pointer',
+    marginLeft: '6px'
+  });
+  sendBtn.onclick = () => {
+    if (input.value.trim()) {
+      handleMessage(input.value);
+      input.value = '';
+    }
+  };
+  inputBox.appendChild(sendBtn);
   footerContainer.appendChild(inputBox);
 
   vocalCtaBox = document.createElement('div');
@@ -847,11 +902,16 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       msgRow.style.justifyContent = "flex-end";
     }
 
+    const containerMsg = document.createElement('div');
+    containerMsg.style.display = 'flex';
+    containerMsg.style.flexDirection = 'column';
+    containerMsg.style.alignItems = sender === 'user' ? 'flex-end' : 'flex-start';
+
     const div = document.createElement('div');
-    div.style.alignSelf = sender === 'user' ? 'flex-end' : 'flex-start';
-    div.style.background = sender === 'user' ? '#d0eaff' : '#f4f4f4';
-    div.style.padding = '8px 12px';
-    div.style.borderRadius = '14px';
+    div.style.background = sender === 'user' ? (config.color || '#339cff') : '#f9f9f9';
+    div.style.color = sender === 'user' ? '#fff' : '#000';
+    div.style.padding = '10px 14px';
+    div.style.borderRadius = '18px';
     div.style.maxWidth = '85%';
     div.style.overflowWrap = 'break-word';
     div.style.fontSize = "1em";
@@ -877,7 +937,16 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     } else {
       div.textContent = msg;
     }
-    msgRow.appendChild(div);
+    containerMsg.appendChild(div);
+    const time = document.createElement('span');
+    time.textContent = new Date().toLocaleTimeString('fr-FR', { hour12: false });
+    time.style.fontSize = '11px';
+    time.style.color = '#888';
+    time.style.marginTop = '2px';
+    time.style.textAlign = 'right';
+    containerMsg.appendChild(time);
+
+    msgRow.appendChild(containerMsg);
     chatLog.appendChild(msgRow);
     chatLog.scrollTop = chatLog.scrollHeight;
     return msgRow;
