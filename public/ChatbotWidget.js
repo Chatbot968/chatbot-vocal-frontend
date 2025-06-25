@@ -540,8 +540,15 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   enlargeBtn.onclick = () => {
     isExpanded = !isExpanded;
     if (widget) {
-      if (isExpanded) widget.classList.add("fullscreen-mode");
-      else widget.classList.remove("fullscreen-mode");
+      if (isExpanded) {
+        widget.classList.add("fullscreen-mode");
+        widget.style.height = 'calc(100svh - env(safe-area-inset-bottom))';
+        widget.style.maxHeight = 'calc(100svh - env(safe-area-inset-bottom))';
+      } else {
+        widget.classList.remove("fullscreen-mode");
+        widget.style.height = '';
+        widget.style.maxHeight = '';
+      }
     }
     setContainerFullscreen(isExpanded);
   };
@@ -1109,9 +1116,11 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     .sidebar { display: none; }
     .custom-chatbot-widget.fullscreen-mode {
       width: 100vw !important;
-      height: 100vh !important;
+      height: 100svh !important;
       max-width: 100vw !important;
-      max-height: 100vh !important;
+      max-height: 100svh !important;
+      position: fixed !important;
+      inset: 0 !important;
       border-radius: 0 !important;
       padding: 20px !important;
       box-sizing: border-box !important;
