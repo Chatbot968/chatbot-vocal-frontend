@@ -200,6 +200,10 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
 
   
   function closeWidget() {
+    if (isExpanded) {
+      isExpanded = false;
+      setContainerFullscreen(false);
+    }
     if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
     isWidgetOpen = false;
