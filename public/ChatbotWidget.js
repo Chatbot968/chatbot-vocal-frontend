@@ -660,8 +660,11 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   inputBox.style.boxShadow = '0 2px 6px rgba(0,0,0,0.15)';
 
   const micIcon = document.createElement('span');
-  micIcon.textContent = '📢';
+  micIcon.textContent = '';
   micIcon.style.marginRight = '6px';
+  micIcon.style.display = 'inline-block';
+  micIcon.style.width = '20px';
+  micIcon.style.height = '20px';
   inputBox.appendChild(micIcon);
 
   input = document.createElement('input');
@@ -685,7 +688,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   inputBox.appendChild(input);
 
   const sendBtn = document.createElement('button');
-  sendBtn.textContent = '✈️';
+  sendBtn.textContent = 'Envoyer';
   Object.assign(sendBtn.style, {
     border: 'none',
     background: 'none',
