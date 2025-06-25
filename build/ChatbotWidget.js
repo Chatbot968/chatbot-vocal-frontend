@@ -185,12 +185,16 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   }
   // ----------- PATCH FERMETURE --------
   function closeWidget() {
-    if (typeof widget !== "undefined" && widget) widget.style.display = 'none';
+    if (typeof widget !== "undefined" && widget) {
+      widget.style.display = 'none';
+      widget.classList.remove('fullscreen-mode');
+    }
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
     isWidgetOpen = false;
+    isExpanded = false;
+    if(expandBtn) expandBtn.style.display='inline-block';
+    if(reduceBtn) reduceBtn.style.display='none';
     if(sidebar) sidebar.style.display='none';
-
-
     if (typeof sizeToggleBtn !== "undefined" && sizeToggleBtn) sizeToggleBtn.textContent = '🗖';
     if (typeof chatLog !== "undefined" && chatLog) {
       chatLog.style.maxHeight = '160px';
@@ -201,6 +205,13 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
     if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
     if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = '';
+    if (container) {
+      container.style.bottom = 'calc(20px + env(safe-area-inset-bottom))';
+      container.style.right = '20px';
+      container.style.top = '';
+      container.style.left = '';
+      container.style.transform = 'translateY(0)';
+    }
     if (window.innerWidth < 500) {
       document.body.style.overflow = '';
       window.scrollTo(0, 0);
