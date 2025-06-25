@@ -100,11 +100,19 @@ function deleteSession(id) {
   }
 }
 
+function exitFullscreen() {
+  const reduceBtn = document.querySelector('#chatbot-widget-container button[title="Réduire"]');
+  if (reduceBtn && reduceBtn.style.display !== 'none') {
+    reduceBtn.click();
+  }
+}
+
 function createNewSession() {
   const session = { id: 'chat_' + Date.now(), title: 'Nouvelle discussion', history: [] };
   sessions.push(session);
   saveSessions();
   setCurrentSession(session.id);
+  exitFullscreen();
   renderHistory();
 }
 

@@ -45,7 +45,8 @@ function loadSessions(){
 function saveSessions(){const c=widgetConfig||{};if(c.maxHistory&&Number.isFinite(c.maxHistory)){sessions.forEach(s=>{s.history.length>c.maxHistory&&(s.history=s.history.slice(-c.maxHistory))})}if(c.maxSessions&&Number.isFinite(c.maxSessions)&&sessions.length>c.maxSessions){sessions=sessions.slice(-c.maxSessions);sessions.some(s=>s.id===currentSessionId)||(currentSessionId=sessions[sessions.length-1]?.id,currentSessionId&&localStorage.setItem(CURRENT_KEY,currentSessionId))}localStorage.setItem(SESSION_KEY,JSON.stringify(sessions))}
 function getCurrentSession(){return sessions.find(s=>s.id===currentSessionId)}
 function setCurrentSession(id){currentSessionId=id;localStorage.setItem(CURRENT_KEY,id);if(typeof renderHistory==="function")renderHistory();if(typeof renderSessions==="function")renderSessions();saveSessions()}
-function createNewSession(){const s={id:'chat_'+Date.now(),title:'Nouvelle discussion',history:[]};sessions.push(s);saveSessions();setCurrentSession(s.id);if(typeof renderSessions==="function")renderSessions()}
+function exitFullscreen(){const b=document.querySelector('#chatbot-widget-container button[title="Réduire"]');b&&"none"!==b.style.display&&b.click()}
+function createNewSession(){const s={id:'chat_'+Date.now(),title:'Nouvelle discussion',history:[]};sessions.push(s);saveSessions();setCurrentSession(s.id);exitFullscreen();if(typeof renderSessions==="function")renderSessions();if(typeof renderHistory==="function")renderHistory()}
 let renderSessions=()=>{};
 
 ensureMarkdownDeps().then(declareSpeechRecognition);
