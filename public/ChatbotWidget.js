@@ -575,12 +575,24 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     boxShadow: '0 2px 6px rgba(0,0,0,0.2)', marginBottom: '12px'
   });
   (config.suggestions || []).forEach(s => {
-    const item = document.createElement('div');
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'suggestion-btn';
     item.textContent = s;
     Object.assign(item.style, {
-      padding: '8px 0', borderBottom: '1px solid #eee', cursor: 'pointer'
+      display: 'block',
+      width: '100%',
+      textAlign: 'left',
+      background: 'transparent',
+      border: 'none',
+      padding: '8px 0',
+      borderBottom: '1px solid #eee',
+      cursor: 'pointer'
     });
-    item.onclick = () => handleMessage(s);
+    item.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      handleMessage(s);
+    });
     suggBox.appendChild(item);
   });
   bodyContainer.appendChild(suggBox);
@@ -1058,6 +1070,16 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     }
     .custom-chatbot-widget p {
       margin: 0.4em 0;
+    }
+    .custom-chatbot-widget .suggestion-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: none;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
     }
     .custom-chatbot-widget ul,
     .custom-chatbot-widget ol {
