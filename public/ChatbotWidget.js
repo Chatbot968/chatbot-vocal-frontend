@@ -362,7 +362,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   sidebar = document.createElement('div');
   sidebar.className = 'sidebar';
   sidebar.style.width = '180px';
-  sidebar.style.maxHeight = 'calc(90vh - 40px)';
+  sidebar.style.maxHeight = 'calc(90svh - 40px)';
   sidebar.style.overflowY = 'auto';
   sidebar.style.background = '#fff';
   sidebar.style.borderRadius = '12px';
@@ -444,7 +444,7 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     padding: '20px',
     fontFamily: 'system-ui, "Segoe UI", sans-serif',
     height: 'auto',
-    maxHeight: 'calc(90vh - 40px)',
+    maxHeight: 'calc(90svh - 40px)',
     overflow: 'hidden'
   });
   widget.classList.add('custom-chatbot-widget');
