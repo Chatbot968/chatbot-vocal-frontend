@@ -217,15 +217,9 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof launcher !== "undefined" && launcher) launcher.style.display = 'inline-block';
     isWidgetOpen = false;
     isExpanded = false;
+    setContainerFullscreen(false);
     if (typeof expandBtn !== "undefined" && expandBtn) expandBtn.style.display = 'inline-block';
     if (typeof reduceBtn !== "undefined" && reduceBtn) reduceBtn.style.display = 'none';
-    if (container) {
-      container.style.transform = 'translateY(0)';
-      container.style.bottom = 'calc(20px + env(safe-area-inset-bottom))';
-      container.style.right = '20px';
-      container.style.top = '';
-      container.style.left = '';
-    }
     if (typeof chatLog !== "undefined" && chatLog) chatLog.style.display = 'none';
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
     if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
@@ -262,6 +256,15 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof inputBox !== "undefined" && inputBox) inputBox.style.display = 'none';
     if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
     if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = '';
+  }
+
+  function setContainerFullscreen(full) {
+    if (!container) return;
+    if (full) {
+      container.classList.add('fullscreen-mode');
+    } else {
+      container.classList.remove('fullscreen-mode');
+    }
   }
 
   let recognition = null;
@@ -533,14 +536,11 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (widget) {
       if (isExpanded) {
         widget.classList.add("fullscreen-mode");
-        widget.style.height = 'calc(100svh - env(safe-area-inset-bottom))';
-        widget.style.maxHeight = 'calc(100svh - env(safe-area-inset-bottom))';
       } else {
         widget.classList.remove("fullscreen-mode");
-        widget.style.height = '';
-        widget.style.maxHeight = '';
       }
     }
+    setContainerFullscreen(isExpanded);
   };
   actions.appendChild(enlargeBtn);
 
@@ -1087,6 +1087,10 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     }
     .widget-container { display: flex; }
     .sidebar { display: none; }
+    :host(.fullscreen-mode) {
+      inset: 0 !important;
+      transform: none !important;
+    }
     .custom-chatbot-widget.fullscreen-mode {
       width: 100vw !important;
       height: 100svh !important;
