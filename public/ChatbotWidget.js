@@ -75,6 +75,7 @@ function getCurrentSession() {
 }
 
 function setCurrentSession(id) {
+  if (window.chatbotResetSession) window.chatbotResetSession();
   currentSessionId = id;
   localStorage.setItem(CURRENT_KEY, id);
   if (typeof renderHistory === 'function') renderHistory();
@@ -114,6 +115,7 @@ function createNewSession() {
   sessions.push(session);
   saveSessions();
   setCurrentSession(session.id);
+  if (window.chatbotResetSession) window.chatbotResetSession();
   exitFullscreen();
   renderHistory();
 }
@@ -735,6 +737,16 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       if (vocalCtaBox) vocalCtaBox.style.display = 'flex';
     }
   }
+  window.chatbotResetSession = function() {
+    if (recognition) recognition.abort();
+    if (currentAudio && !currentAudio.paused) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    }
+    currentAudio = null;
+    isTextMode = true;
+    updateModeUI();
+  };
   if (speechSupported) footerNav.appendChild(vocalTab);
   footerNav.appendChild(textTab);
   footerContainer.appendChild(footerNav);
