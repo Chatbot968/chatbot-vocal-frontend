@@ -194,7 +194,7 @@ function showAlert(msg) {
 function initChatbot(config, backendUrl, clientId, speechSupported) {
   // Toutes les variables (comme avant)
   let widget, launcher, chatLog, inputBox, vocalCtaBox, suggBox, input,
-      sidebar, sessionList,
+      sidebar, sessionList, tabsContainer,
       isWidgetOpen = false, isExpanded = false;
 
   loadSessions();
@@ -379,8 +379,8 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   sidebar.appendChild(newBtn);
 
   renderSessions = function() {
-    if (!sessionList) return;
-    sessionList.innerHTML = '';
+    if (sessionList) sessionList.innerHTML = '';
+    if (tabsContainer) tabsContainer.innerHTML = '';
     sessions.forEach(s => {
       const row = document.createElement('div');
       row.style.display = 'flex';
@@ -416,6 +416,38 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
 
       sessionList.appendChild(row);
     });
+
+    sessions.forEach(s => {
+      const tab = document.createElement('button');
+      tab.textContent = s.title || s.id;
+      tab.style.border = 'none';
+      tab.style.borderRadius = '6px';
+      tab.style.padding = '4px 8px';
+      tab.style.cursor = 'pointer';
+      tab.style.flexShrink = '0';
+      tab.style.whiteSpace = 'nowrap';
+      if (s.id === currentSessionId) {
+        tab.style.background = config.color;
+        tab.style.color = '#fff';
+      } else {
+        tab.style.background = '#fff';
+        tab.style.color = '#000';
+      }
+      tab.onclick = () => setCurrentSession(s.id);
+      if (tabsContainer) tabsContainer.appendChild(tab);
+    });
+
+    if (tabsContainer) {
+      const addBtn = document.createElement('button');
+      addBtn.textContent = '+';
+      addBtn.style.border = 'none';
+      addBtn.style.borderRadius = '6px';
+      addBtn.style.padding = '4px 8px';
+      addBtn.style.cursor = 'pointer';
+      addBtn.style.flexShrink = '0';
+      addBtn.onclick = createNewSession;
+      tabsContainer.appendChild(addBtn);
+    }
   };
   renderSessions();
 
@@ -568,6 +600,15 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
   actions.appendChild(closeBtn);
 
   headerContainer.appendChild(header);
+
+  tabsContainer = document.createElement('div');
+  tabsContainer.className = 'session-tabs';
+  tabsContainer.style.display = 'flex';
+  tabsContainer.style.gap = '4px';
+  tabsContainer.style.marginTop = '8px';
+  tabsContainer.style.overflowX = 'auto';
+  tabsContainer.style.paddingBottom = '4px';
+  headerContainer.appendChild(tabsContainer);
 
   suggBox = document.createElement('div');
   Object.assign(suggBox.style, {
@@ -1097,8 +1138,11 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
       z-index: 9999;
       padding-bottom: env(safe-area-inset-bottom, 20px);
     }
+    .session-tabs { display: flex; gap: 4px; overflow-x: auto; margin-top: 8px; }
+    .session-tabs button { background: #fff; border: none; padding: 4px 8px; border-radius: 6px; cursor: pointer; flex-shrink: 0; white-space: nowrap; font-size: 12px; }
     .widget-container { display: flex; }
     .sidebar { display: none; }
+    .custom-chatbot-widget.fullscreen-mode .session-tabs { display: none; }
     .custom-chatbot-widget.fullscreen-mode {
       width: 100vw !important;
       height: 100svh !important;
