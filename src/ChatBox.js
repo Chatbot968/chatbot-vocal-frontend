@@ -17,7 +17,7 @@ export default function ChatBox() {
     <div className="flex flex-col w-full items-center">
       <div
         className={`relative transition-all duration-300 bg-white rounded-2xl shadow p-4 mb-2 w-full max-w-lg ${
-          expanded ? "max-h-[80vh]" : "max-h-72"
+          expanded ? "max-h-[80svh]" : "max-h-72"
         } overflow-y-auto`}
         style={{ minHeight: 120 }}
       >

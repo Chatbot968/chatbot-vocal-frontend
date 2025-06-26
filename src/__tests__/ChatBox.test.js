@@ -27,7 +27,7 @@ describe('ChatBox', () => {
     const box = container.querySelector('div.relative');
     expect(box.className).toContain('max-h-72');
     fireEvent.click(btn);
-    expect(box.className).toContain('max-h-[80vh]');
+    expect(box.className).toContain('max-h-[80svh]');
     fireEvent.click(btn);
     expect(box.className).toContain('max-h-72');
   });
