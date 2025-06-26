@@ -225,6 +225,18 @@ function initChatbot(config, backendUrl, clientId, speechSupported) {
     if (typeof vocalCtaBox !== "undefined" && vocalCtaBox) vocalCtaBox.style.display = 'none';
     if (typeof suggBox !== "undefined" && suggBox) suggBox.style.display = '';
     if (typeof widget !== "undefined" && widget) widget.blur?.();
+
+    if (currentAudio && !currentAudio.paused) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      currentAudio = null;
+    }
+
+    if (recognition) {
+      try { recognition.stop(); } catch (e) {}
+      try { recognition.abort(); } catch (e) {}
+      isListening = false;
+    }
   }
 
   function disableChatbot() {
